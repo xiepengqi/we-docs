@@ -3,52 +3,28 @@
     @open="handleOpen"
     @close="handleClose"
   >
-    <el-submenu index="1">
-      <template slot="title">
-        <i class="el-icon-location" />
-        <span>导航一</span>
-      </template>
-      <el-submenu index="1-4">
-        <template slot="title">选项4</template>
-        <el-menu-item index="1-4-1">选项1</el-menu-item>
-      </el-submenu>
-    </el-submenu>
-
-    <el-submenu index="1">
-      <template slot="title">
-        <i class="el-icon-location" />
-        <span>导航一</span>
-      </template>
-      <el-submenu index="1-4">
-        <template slot="title">选项4</template>
-        <el-menu-item index="1-4-1">选项1</el-menu-item>
-      </el-submenu>
-    </el-submenu>
-    <el-menu-item index="2">
-      <i class="el-icon-menu" />
-      <span slot="title">导航二</span>
-    </el-menu-item>
-    <el-menu-item index="3" disabled>
-      <i class="el-icon-document" />
-      <span slot="title">导航三</span>
-    </el-menu-item>
-    <el-menu-item index="4">
-      <i class="el-icon-setting" />
-      <span slot="title">导航四</span>
-    </el-menu-item>
+    <menu-elem v-for="(menu, index) in menus" :key="menu.name" :index="index" :data="menu" />
   </el-menu>
+
 </template>
 
 <script>
+import MenuElem from './MenuElem'
 export default {
   components: {
+    MenuElem
 
   },
   props: {
-    // {name: "name", child: []}
-    data: {
-      type: Object,
-      default: () => {}
+    // [{name: "name", child: []}]
+    menus: {
+      type: Array,
+      default: () => []
+    }
+  },
+  data() {
+    return {
+
     }
   },
   methods: {

@@ -3,7 +3,7 @@
     <el-header>Header</el-header>
     <el-container>
       <el-aside>
-        <left-menu />
+        <left-nav :menus="menus" />
       </el-aside>
       <el-main>Main</el-main>
     </el-container>
@@ -11,10 +11,40 @@
 </template>
 
 <script>
-import LeftMenu from './components/LeftMenu'
+import LeftNav from './components/LeftNav'
 export default {
   components: {
-    LeftMenu
+    LeftNav
+  },
+  data() {
+    return {
+      menus: [
+        {
+          name: 13,
+          child: [{
+            name: 34
+          }]
+        },
+        {
+          name: 13,
+          child: [{
+            name: 34
+          }]
+        },
+        {
+          name: 13,
+          child: [{
+            name: 34
+          }]
+        },
+        {
+          name: 13,
+          child: [{
+            name: 34
+          }]
+        }
+      ]
+    }
   }
 }
 </script>
@@ -22,23 +52,19 @@ export default {
 <style scoped lang="scss">
   #app {
     .el-header{
-      background-color: #B3C0D1;
+      background-color: #d7dade;
       color: #333;
-      text-align: center;
       line-height: 60px;
     }
     .el-aside {
-      background-color: #D3DCE6;
       color: #333;
-      text-align: center;
-      line-height: 200px;
+      line-height: 500px;
     }
 
     .el-main {
-      background-color: #E9EEF3;
+      background-color: #e4e9ee;
       color: #333;
-      text-align: center;
-      line-height: 160px;
+      line-height: 500px;
     }
   }
 </style>

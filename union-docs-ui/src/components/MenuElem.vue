@@ -1,15 +1,20 @@
 <template>
-  <el-submenu v-if="data.child && data.child.length >0" :index="data.name">
+  <el-submenu v-if="data.child && data.child.length >0" :index="index">
     <template slot="title">{{ data.name }}</template>
-    <menu-item :data="data.child" />
+    <menu-elem v-for="menu in data.child" :key="menu.name" :data="menu" />
   </el-submenu>
-  <el-menu-item v-else :index="data.name">{{data.name}}</el-menu-item>
+  <el-menu-item v-else>{{ data.name }}</el-menu-item>
 </template>
 
 <script>
 export default {
+  name: 'MenuElem',
   props: {
     // {name: "name", child: []}
+    index: {
+      type: Number,
+      default: () => 0
+    },
     data: {
       type: Object,
       default: () => {}
