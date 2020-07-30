@@ -1,13 +1,19 @@
-const config = require("./config")
-const server = require('server');
-const { get, post } = server.router;
+require("./parser")
 
-let serverInfo = { port: config.serverPort }
+try{
+    const config = require("./config")
+    const server = require('server');
+    const { get, post } = server.router;
 
-server(serverInfo,[
-    get('/', ctx => 'Hello world!'),
-    get('/menus', require("./action/getMenus"))
-]);
+    let serverInfo = { port: config.serverPort }
 
-console.log("started", JSON.stringify(serverInfo))
-console.log(`http://localhost:${serverInfo.port}`)
+    server(serverInfo,[
+        get('/', ctx => 'Hello world!'),
+        get('/data', ctx => config.data)
+    ]);
+
+    console.log("started", JSON.stringify(serverInfo))
+    console.log(`http://localhost:${serverInfo.port}`)
+}catch (e) {
+    console.log(e)
+}
