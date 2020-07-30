@@ -12,6 +12,7 @@
 
 <script>
 import LeftNav from './components/LeftNav'
+import Vue from 'vue'
 export default {
   components: {
     LeftNav
@@ -20,31 +21,36 @@ export default {
     return {
       menus: [
         {
-          name: 13,
+          name: 1321,
           child: [{
             name: 34
           }]
         },
         {
-          name: 13,
+          name: 423,
           child: [{
             name: 34
           }]
         },
         {
-          name: 13,
+          name: 53,
           child: [{
             name: 34
           }]
         },
         {
-          name: 13,
+          name: 646,
           child: [{
             name: 34
           }]
         }
       ]
     }
+  },
+  mounted() {
+    this.$http.get('/data').then(resp => {
+      Vue.prototype.$data = resp
+    })
   }
 }
 </script>

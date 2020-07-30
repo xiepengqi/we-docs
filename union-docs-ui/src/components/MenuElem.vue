@@ -1,5 +1,5 @@
 <template>
-  <el-submenu v-if="data.child && data.child.length >0" :index="index">
+  <el-submenu v-if="data.child && data.child.length >0" :index="String(index)">
     <template slot="title">{{ data.name }}</template>
     <menu-elem v-for="menu in data.child" :key="menu.name" :data="menu" />
   </el-submenu>
