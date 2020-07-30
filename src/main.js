@@ -3,7 +3,7 @@ require("./parser")
 try{
     const config = require("./config")
     const server = require('server');
-    const { get, post } = server.router;
+    const { get } = server.router;
 
     let serverInfo = { port: config.serverPort }
 
