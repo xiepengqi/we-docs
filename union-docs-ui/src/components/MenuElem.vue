@@ -1,5 +1,5 @@
 <template>
-  <el-submenu v-if="child && child.length >0" :index="index">
+  <el-submenu v-if="data.$type !== 'method'" :index="index">
     <template slot="title">
       <el-tooltip class="item" effect="dark" placement="right">
         <div slot="content" style="white-space: pre-line;">{{ data.$desc || '暂无描述' }}</div>
