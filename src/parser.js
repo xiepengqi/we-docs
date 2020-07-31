@@ -6,6 +6,9 @@ let homeDir
 let sourceDir = trim(config.sourceDir).replace(/\/+/g, '/').replace(/\/$/, '')
 let workDir = trim(config.workDir).replace(/\/+/g, '/').replace(/\/$/, '')
 
+let pathMap = {}
+config.data = {}
+
 doProcess()
 
 function doProcess(){
@@ -42,7 +45,15 @@ function process() {
         // })
         .then(() => e(`find ${workDir} -name '*.java'`))
         .then((item)=> {
-            item.split("\n").map(item => trim(item)).filter(item => item && item.match(/\.java$/)).forEach(item => eachJavaFile(item))
+            item.split("\n").map(item => item)
+                .filter(item => item && item.match(/\.java$/))
+                .map(item => {
+                    item = trim(item)
+                    let [module, className] = parsePath(item)
+                    pathMap[reget(item, new RegExp('/src/main/java/(.+).java')).replace(/\//g, '.')] = item
+                    return item
+                })
+                .forEach(item => eachJavaFile(item))
         })
         .then(() => {
             console.log("refreshed.....")
@@ -51,7 +62,7 @@ function process() {
 
 function eachJavaFile(path) {
     let text = String(fs.readFileSync(path))
-    let {module, className} = parsePath(path)
+    let [module, className] = parsePath(path)
 
     if (text.match(/(?:@RestController|@Controller)/)) {
         register(module, className)
@@ -64,10 +75,21 @@ function eachJavaFile(path) {
     if (text.indexOf('org.apache.dubbo.config.annotation.Service') !== -1 &&
         text.indexOf('@Service') !== -1) {
         register(module, className)
-        config.data[module][className].$desc = getClassDesc(text, className)
+
+        let classInfo = config.data[module][className]
+        let [implClass, implPath] = getImpl(text)
+
+        let implText = implPath ? String(fs.readFileSync(implPath)):""
+
+        classInfo.$label = implClass
+        classInfo.$desc = getClassDesc(implText, implClass)
+        classInfo.$desc = [classInfo.$desc,  getClassDesc(text, className)].filter(item => item).join('\n')
+
         getDubboMethods(text).forEach(item => {
             register(module, className, item)
-            config.data[module][className][item].$desc = getMethodDesc(text, item)
+
+            classInfo[item].$desc = getMethodDesc(implText, item)
+            classInfo[item].$desc =[classInfo[item].$desc, getMethodDesc(text, item)].filter(item => item).join('\n')
         })
     }
 }
@@ -98,10 +120,10 @@ function getDubboMethods(text) {
 }
 function parsePath(path) {
     let strs = path.replace(workDir, '').split('/').filter(item => item)
-    return {
+    return Object.values({
         module: reget(path, /.*\/([^/]+)\/src\/main\/java.*/),
         className: strs[strs.length - 1].replace('.java', '')
-    }
+    })
 }
 
 function reget(str, reg) {
@@ -110,13 +132,10 @@ function reget(str, reg) {
 }
 
 function register(module, className, methodName, info) {
-    if (!config.data) {
-        config.data = {}
-    }
-
     if (module && !config.data[module]) {
         config.data[module] = {
             $name: module,
+            $label: module,
             $type: 'module'
         }
     }
@@ -124,6 +143,7 @@ function register(module, className, methodName, info) {
     if (className && !config.data[module][className]) {
         config.data[module][className] = {
             $name: className,
+            $label: className,
             $type: 'class'
         }
     }
@@ -131,23 +151,29 @@ function register(module, className, methodName, info) {
     if (methodName && !config.data[module][className][methodName]) {
         config.data[module][className][methodName] = info || {}
         config.data[module][className][methodName].$name = methodName
+        config.data[module][className][methodName].$label = methodName
         config.data[module][className][methodName].$type = 'method'
     }
 }
 
-function getSupperPath(text) {
+function getImpl(text) {
+    let interfaceName = reget(text, /public class \S+ implements (\S+) {/)
 
+    return Object.values({
+        implClass: interfaceName,
+        implPath: pathMap[reget(text, new RegExp(`import\\s+(.+${interfaceName});`))]
+    })
 }
 
 function getClassDesc(text, className) {
-    let reg = new RegExp('[;]([^;]+)public\\s+class\\s+'+className+'\\s*\\{')
+    let reg = new RegExp('[;]([^;]+)public\\s+(?:`class|interface)\\s+'+className+'\\s*')
 
     let r = reg.exec(text)
     return r ? trim(r[1]): ""
 }
 
 function getMethodDesc(text, methodName) {
-    let reg = new RegExp('[\\{\\};]([^;\\}\\{]+)public\\s+\\S+\\s+'+methodName+'\\s*\\(')
+    let reg = new RegExp('[\\{\\};]([^;\\}\\{]+)\\s+\\S+\\s+\\S+\\s+'+methodName+'\\s*\\(')
 
     let r = reg.exec(text)
     return r ? trim(r[1]): ""
