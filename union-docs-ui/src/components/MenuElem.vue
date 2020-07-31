@@ -3,15 +3,15 @@
     <template slot="title">
       <el-tooltip class="item" effect="dark" placement="right">
         <div slot="content" style="white-space: pre-line;">{{ data.$desc || '暂无描述' }}</div>
-        <span>{{ data.$name }}</span>
+        <span>{{ data.$label }}</span>
       </el-tooltip>
     </template>
-    <menu-elem v-for="(menu, i) in child" :key="menu.$name" :data="menu" :index="index + i" />
+    <menu-elem v-for="(menu, i) in child" :key="menu.$label" :data="menu" :index="index + i" />
   </el-submenu>
 
   <el-tooltip v-else class="item" effect="dark" placement="right">
     <div slot="content" style="white-space: pre-line;">{{ data.$desc || "暂无描述" }}</div>
-    <el-menu-item>{{ data.$name }}</el-menu-item>
+    <el-menu-item>{{ data.$label }}</el-menu-item>
   </el-tooltip>
 
 </template>

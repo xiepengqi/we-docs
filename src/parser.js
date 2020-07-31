@@ -83,13 +83,13 @@ function eachJavaFile(path) {
 
         classInfo.$label = implClass
         classInfo.$desc = getClassDesc(implText, implClass)
-        classInfo.$desc = [classInfo.$desc,  getClassDesc(text, className)].filter(item => item).join('\n')
+        classInfo.$desc = [classInfo.$desc,  getClassDesc(text, className)].filter(item => item).join('\n\n')
 
         getDubboMethods(text).forEach(item => {
             register(module, className, item)
 
             classInfo[item].$desc = getMethodDesc(implText, item)
-            classInfo[item].$desc =[classInfo[item].$desc, getMethodDesc(text, item)].filter(item => item).join('\n')
+            classInfo[item].$desc =[classInfo[item].$desc, getMethodDesc(text, item)].filter(item => item).join('\n\n')
         })
     }
 }
@@ -173,7 +173,7 @@ function getClassDesc(text, className) {
 }
 
 function getMethodDesc(text, methodName) {
-    let reg = new RegExp('[\\{\\};]([^;\\}\\{]+)\\s+\\S+\\s+\\S+\\s+'+methodName+'\\s*\\(')
+    let reg = new RegExp('[\\{\\};]([^;\\}\\{]+)\\s+(?:public)?\\s+\\S+\\s+'+methodName+'\\s*\\(')
 
     let r = reg.exec(text)
     return r ? trim(r[1]): ""
