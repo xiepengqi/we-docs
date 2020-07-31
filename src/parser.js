@@ -7,7 +7,6 @@ let sourceDir = trim(config.sourceDir).replace(/\/+/g, '/').replace(/\/$/, '')
 let workDir = trim(config.workDir).replace(/\/+/g, '/').replace(/\/$/, '')
 
 doProcess()
-setTimeout(doProcess, (config.refreshSec || 60) * 1000)
 
 function doProcess(){
     try {
@@ -15,6 +14,7 @@ function doProcess(){
     } catch (e) {
         console.log(JSON.stringify(e))
     }
+    setTimeout(doProcess, (config.refreshSec || 60) * 1000)
 }
 
 function process() {
@@ -89,19 +89,22 @@ function register(module, className, methodName, info) {
 
     if (module && !config.data[module]) {
         config.data[module] = {
-            $name: module
+            $name: module,
+            $type: 'module'
         }
     }
 
     if (className && !config.data[module][className]) {
         config.data[module][className] = {
-            $name: className
+            $name: className,
+            $type: 'class'
         }
     }
 
     if (methodName && !config.data[module][className][methodName]) {
         config.data[module][className][methodName] = info || {}
         config.data[module][className][methodName].$name = methodName
+        config.data[module][className][methodName].$type = 'method'
     }
 }
 

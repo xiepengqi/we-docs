@@ -1,6 +1,5 @@
-require("./parser")
-
 try{
+    require("./parser")
     const config = require("./config")
     const server = require('server');
     const { get } = server.router;
