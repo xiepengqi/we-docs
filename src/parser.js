@@ -88,15 +88,20 @@ function register(module, className, methodName, info) {
     }
 
     if (module && !config.data[module]) {
-        config.data[module] = {}
+        config.data[module] = {
+            $name: module
+        }
     }
 
     if (className && !config.data[module][className]) {
-        config.data[module][className] = {}
+        config.data[module][className] = {
+            $name: className
+        }
     }
 
     if (methodName && !config.data[module][className][methodName]) {
         config.data[module][className][methodName] = info || {}
+        config.data[module][className][methodName].$name = methodName
     }
 }
 

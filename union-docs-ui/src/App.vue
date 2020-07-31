@@ -12,44 +12,18 @@
 
 <script>
 import LeftNav from './components/LeftNav'
-import Vue from 'vue'
 export default {
   components: {
     LeftNav
   },
   data() {
     return {
-      menus: [
-        {
-          name: 1321,
-          child: [{
-            name: 34
-          }]
-        },
-        {
-          name: 423,
-          child: [{
-            name: 34
-          }]
-        },
-        {
-          name: 53,
-          child: [{
-            name: 34
-          }]
-        },
-        {
-          name: 646,
-          child: [{
-            name: 34
-          }]
-        }
-      ]
+      menus: {}
     }
   },
   mounted() {
     this.$http.get('/data').then(resp => {
-      Vue.prototype.$data = resp
+      this.menus = resp.data
     })
   }
 }

@@ -1,9 +1,10 @@
 <template>
   <el-menu
+    unique-opened
     @open="handleOpen"
     @close="handleClose"
   >
-    <menu-elem v-for="(menu, index) in menus" :key="menu.name" :index="index" :data="menu" />
+    <menu-elem v-for="(menu, index) in Object.values(menus)" :key="menu.$name" :index="String(index)" :data="menu" />
   </el-menu>
 
 </template>
@@ -13,13 +14,11 @@ import MenuElem from './MenuElem'
 export default {
   components: {
     MenuElem
-
   },
   props: {
-    // [{name: "name", child: []}]
     menus: {
-      type: Array,
-      default: () => []
+      type: Object,
+      default: () => {}
     }
   },
   data() {
@@ -29,10 +28,8 @@ export default {
   },
   methods: {
     handleOpen(key, keyPath) {
-      console.log(key, keyPath)
     },
     handleClose(key, keyPath) {
-      console.log(key, keyPath)
     }
   }
 }
