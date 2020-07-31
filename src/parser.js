@@ -70,6 +70,7 @@ function eachJavaFile(path) {
         getHttpMethods(text).forEach(item => {
             register(module, className, item)
             config.data[module][className][item].$desc = getMethodDesc(text, item)
+            enrichCommonMethodInfo(text, config.data[module][className][item])
         })
     }
     if (text.indexOf('org.apache.dubbo.config.annotation.Service') !== -1 &&
@@ -90,8 +91,18 @@ function eachJavaFile(path) {
 
             classInfo[item].$desc = getMethodDesc(implText, item)
             classInfo[item].$desc =[classInfo[item].$desc, getMethodDesc(text, item)].filter(item => item).join('\n\n')
+            enrichCommonMethodInfo(implText || text, config.data[module][className][item])
         })
     }
+}
+
+function enrichCommonMethodInfo(text, info) {
+    let reg = new RegExp('[\\{\\};][^;\\}\\{]+\\s+((?:public)?\\s+(\\S+)\\s+'+info.$name+'\\s*\\(([^\\{\\}]*)\\))')
+    let r = reg.exec(text)
+
+    info.profile = r[1]
+    info.result = r[2]
+    info.paramStr = r[3]
 }
 
 function getHttpMethods(text) {
@@ -118,6 +129,7 @@ function getDubboMethods(text) {
 
     return result
 }
+
 function parsePath(path) {
     let strs = path.replace(workDir, '').split('/').filter(item => item)
     return Object.values({
