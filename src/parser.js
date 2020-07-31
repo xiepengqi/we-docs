@@ -61,6 +61,15 @@ function eachJavaFile(path) {
             config.data[module][className][item].$desc = getMethodDesc(text, item)
         })
     }
+    if (text.indexOf('org.apache.dubbo.config.annotation.Service') !== -1 &&
+        text.indexOf('@Service') !== -1) {
+        register(module, className)
+        config.data[module][className].$desc = getClassDesc(text, className)
+        getDubboMethods(text).forEach(item => {
+            register(module, className, item)
+            config.data[module][className][item].$desc = getMethodDesc(text, item)
+        })
+    }
 }
 
 function getHttpMethods(text) {
@@ -75,13 +84,31 @@ function getHttpMethods(text) {
 
     return result
 }
+function getDubboMethods(text) {
+    let reg = /[\{;][^\{;]+@Override[^\{;]+public\s+\S+\s+([\w\d]+)\s*\(/g
+
+    let result = []
+    let r = reg.exec(text)
+    while (r) {
+        result.push(r[1])
+        r = reg.exec(text)
+    }
+
+    return result
+}
 function parsePath(path) {
     let strs = path.replace(workDir, '').split('/').filter(item => item)
     return {
-        module: strs[0],
+        module: reget(path, /.*\/([^/]+)\/src\/main\/java.*/),
         className: strs[strs.length - 1].replace('.java', '')
     }
 }
+
+function reget(str, reg) {
+    let r = reg.exec(str)
+    return r ? trim(r[1]): ""
+}
+
 function register(module, className, methodName, info) {
     if (!config.data) {
         config.data = {}
@@ -106,6 +133,10 @@ function register(module, className, methodName, info) {
         config.data[module][className][methodName].$name = methodName
         config.data[module][className][methodName].$type = 'method'
     }
+}
+
+function getSupperPath(text) {
+
 }
 
 function getClassDesc(text, className) {
