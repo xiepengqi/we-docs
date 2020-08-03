@@ -51,6 +51,7 @@ function process() {
                     item = trim(item)
                     let [module, className] = parsePath(item)
                     pathMap[reget(item, new RegExp('/src/main/java/(.+).java')).replace(/\//g, '.')] = item
+                    pathMap[className] = item
                     return item
                 })
                 .forEach(item => eachJavaFile(item))
@@ -103,7 +104,7 @@ function enrichCommonMethodInfo(text, info) {
     let reg = new RegExp('[\\{\\};][^;\\}\\{]+\\s+((?:public)?\\s+(\\S+)\\s+'+info.$name+'\\s*\\(([^\\{\\};]*)\\))')
     let r = reg.exec(text)
 
-    info.profile = r[1]
+    info.profile = trim(r[1])
     info.result = {
         $type: r[2]
     }
