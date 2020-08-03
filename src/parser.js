@@ -66,11 +66,14 @@ function eachJavaFile(path) {
 
     if (text.match(/(?:@RestController|@Controller)/)) {
         register(module, className)
-        config.data[module][className].$desc = getClassDesc(text, className)
+        let classInfo = config.data[module][className]
+        classInfo.$desc = getClassDesc(text, className)
+        classInfo.$package = getPackage(text)
         getHttpMethods(text).forEach(item => {
             register(module, className, item)
-            config.data[module][className][item].$desc = getMethodDesc(text, item)
-            enrichCommonMethodInfo(text, config.data[module][className][item])
+            classInfo[item].$desc = getMethodDesc(text, item)
+            classInfo[item].$package = getPackage(text)
+            enrichCommonMethodInfo(text, classInfo[item])
         })
     }
     if (text.indexOf('org.apache.dubbo.config.annotation.Service') !== -1 &&
@@ -82,16 +85,16 @@ function eachJavaFile(path) {
 
         let implText = implPath ? String(fs.readFileSync(implPath)):""
 
-        classInfo.$label = implClass
-        classInfo.$desc = getClassDesc(implText, implClass)
-        classInfo.$desc = [classInfo.$desc,  getClassDesc(text, className)].filter(item => item).join('\n\n')
+        classInfo.$label = implClass || className
+        classInfo.$desc = getClassDesc(implText, implClass) ||  getClassDesc(text, className)
+        classInfo.$package = getPackage(text)
 
         getDubboMethods(text).forEach(item => {
             register(module, className, item)
 
-            classInfo[item].$desc = getMethodDesc(implText, item)
-            classInfo[item].$desc =[classInfo[item].$desc, getMethodDesc(text, item)].filter(item => item).join('\n\n')
-            enrichCommonMethodInfo(implText || text, config.data[module][className][item])
+            classInfo[item].$desc = getMethodDesc(implText, item) || getMethodDesc(text, item)
+            classInfo[item].$package = getPackage(text)
+            enrichCommonMethodInfo(implText || text, classInfo[item])
         })
     }
 }
@@ -145,26 +148,29 @@ function reget(str, reg) {
 
 function register(module, className, methodName, info) {
     if (module && !config.data[module]) {
-        config.data[module] = {
+        config.data[module] = Object.assign({
             $name: module,
             $label: module,
             $type: 'module'
-        }
+        }, config.data[module] || {})
     }
 
     if (className && !config.data[module][className]) {
-        config.data[module][className] = {
+        config.data[module][className] = Object.assign({
             $name: className,
+            $module: module,
             $label: className,
             $type: 'class'
-        }
+        }, config.data[module][className] || {})
     }
 
     if (methodName && !config.data[module][className][methodName]) {
-        config.data[module][className][methodName] = info || {}
-        config.data[module][className][methodName].$name = methodName
-        config.data[module][className][methodName].$label = methodName
-        config.data[module][className][methodName].$type = 'method'
+        config.data[module][className][methodName] = Object.assign({
+            $name: methodName,
+            $class: className,
+            $label: methodName,
+            $type: 'method'
+        },methodName && !config.data[module][className][methodName] || {},info || {})
     }
 }
 
@@ -175,6 +181,10 @@ function getImpl(text) {
         implClass: interfaceName,
         implPath: pathMap[reget(text, new RegExp(`import\\s+(.+${interfaceName});`))]
     })
+}
+
+function getPackage(text) {
+    return reget(text, new RegExp(`package\\s+(.+);`))
 }
 
 function getClassDesc(text, className) {

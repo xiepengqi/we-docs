@@ -1,12 +1,9 @@
 <template>
   <el-container id="app">
-    <el-header>Header</el-header>
-    <el-container>
-      <el-aside>
-        <left-nav :menus="menus" />
-      </el-aside>
-      <el-main>Main</el-main>
-    </el-container>
+    <el-aside>
+      <left-nav :menus="menus" />
+    </el-aside>
+    <el-main></el-main>
   </el-container>
 </template>
 
