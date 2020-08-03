@@ -100,12 +100,42 @@ function eachJavaFile(path) {
 }
 
 function enrichCommonMethodInfo(text, info) {
-    let reg = new RegExp('[\\{\\};][^;\\}\\{]+\\s+((?:public)?\\s+(\\S+)\\s+'+info.$name+'\\s*\\(([^\\{\\}]*)\\))')
+    let reg = new RegExp('[\\{\\};][^;\\}\\{]+\\s+((?:public)?\\s+(\\S+)\\s+'+info.$name+'\\s*\\(([^\\{\\};]*)\\))')
     let r = reg.exec(text)
 
     info.profile = r[1]
-    info.result = r[2]
-    info.paramStr = r[3]
+    info.result = {
+        $type: r[2]
+    }
+    info.params = r[3]
+
+    enrichDomainInfo(info.result, getFullClass(info.result.$type.replace(/<.*>/g, ''), text))
+}
+
+function enrichDomainInfo(result, fullClass) {
+    let path = pathMap[fullClass]
+    if (!path) {
+        return result
+    }
+
+    let text = String(fs.readFileSync(path));
+    let [module, className] = parsePath(path)
+
+    let desc = getClassDesc(text, className)
+    result.$desc = desc || result.$desc
+
+    let reg = /(?:private|public)\s+([^\s\.\-\(\)\=+]+)\s+([^\s\.\-\(\)\=+]+)\s*;/g
+    let r = reg.exec(text)
+    while (r) {
+        result[r[2]] = {
+            $type: r[1],
+            $desc: getFieldDesc(text, r[2])
+        }
+
+        enrichDomainInfo(result[r[2]], getFullClass(result[r[2]].$type, text))
+        r = reg.exec(text)
+    }
+    return result
 }
 
 function getHttpMethods(text) {
@@ -183,12 +213,16 @@ function getImpl(text) {
     })
 }
 
+function getFullClass(className, text) {
+    return  reget(text, new RegExp(`import\\s+(.+${className});`)) || className
+}
+
 function getPackage(text) {
     return reget(text, new RegExp(`package\\s+(.+);`))
 }
 
 function getClassDesc(text, className) {
-    let reg = new RegExp('[;]([^;]+)public\\s+(?:`class|interface)\\s+'+className+'\\s*')
+    let reg = new RegExp('[;]([^;]+)public\\s+(?:class|interface)\\s+'+className+'\\s*')
 
     let r = reg.exec(text)
     return r ? trim(r[1]): ""
@@ -196,6 +230,13 @@ function getClassDesc(text, className) {
 
 function getMethodDesc(text, methodName) {
     let reg = new RegExp('[\\{\\};]([^;\\}\\{]+)\\s+(?:public)?\\s+\\S+\\s+'+methodName+'\\s*\\(')
+
+    let r = reg.exec(text)
+    return r ? trim(r[1]): ""
+}
+
+function getFieldDesc(text, fieldName) {
+    let reg = new RegExp('[;\\{]\\s+([^;\\{]+)(?:private|public).*'+fieldName+'\\s*;')
 
     let r = reg.exec(text)
     return r ? trim(r[1]): ""

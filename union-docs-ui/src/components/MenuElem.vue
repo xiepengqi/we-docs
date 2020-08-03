@@ -3,7 +3,7 @@
     <template slot="title">
       <el-tooltip class="item" effect="dark" placement="right">
         <div slot="content" style="white-space: pre-line;">{{ data.$desc || '暂无描述' }}</div>
-        <span>{{ data.$label }}</span>
+        <span @click="setContent">{{ data.$label }}</span>
       </el-tooltip>
     </template>
     <menu-elem v-for="(menu, i) in child" :key="menu.$label" :data="menu" :index="index + i" />
@@ -11,7 +11,7 @@
 
   <el-tooltip v-else class="item" effect="dark" placement="right">
     <div slot="content" style="white-space: pre-line;">{{ data.$desc || "暂无描述" }}</div>
-    <el-menu-item>{{ data.$label }}</el-menu-item>
+    <el-menu-item @click="setContent">{{ data.$label }}</el-menu-item>
   </el-tooltip>
 
 </template>
@@ -38,6 +38,9 @@ export default {
     getChild(data) {
       return Object.keys(data).filter(item => !item.startsWith('$'))
         .map(item => data[item])
+    },
+    setContent() {
+      this.$store.state.content = this.data
     }
   }
 }

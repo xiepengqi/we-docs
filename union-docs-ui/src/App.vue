@@ -3,7 +3,13 @@
     <el-aside>
       <left-nav :menus="menus" />
     </el-aside>
-    <el-main></el-main>
+    <el-main>
+      <el-input
+        type="textarea"
+        :value="JSON.stringify($store.state.content, null, 2)"
+        :autosize="{ minRows: 30, maxRows: 100}"
+      />
+    </el-main>
   </el-container>
 </template>
 
