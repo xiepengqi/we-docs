@@ -107,12 +107,24 @@ function enrichCommonMethodInfo(text, info) {
     info.result = {
         $type: r[2]
     }
-    info.params = r[3]
+    enrichDomainInfo(info.result, getFullClass(info.result.$type.replace(/<.*>/g, ''), text), text)
 
-    enrichDomainInfo(info.result, getFullClass(info.result.$type.replace(/<.*>/g, ''), text))
+    info.params = {}
+    let paramsStr = r[3].replace(/@[\S]+/g, '')
+    reg = new RegExp('\\s*([A-Z][a-zA-Z_0-9]+)\\s+(\\S+)\\s*,?', 'g')
+    let nr = reg.exec(paramsStr)
+    while (nr) {
+        let x = {
+            $type: nr[1]
+        }
+        info.params[nr[2]] = x
+        enrichDomainInfo(x, getFullClass(x.$type.replace(/<.*>/g, ''), text), text)
+
+        nr = reg.exec(paramsStr)
+    }
 }
 
-function enrichDomainInfo(result, fullClass) {
+function enrichDomainInfo(result, fullClass, oriText) {
     let path = pathMap[fullClass]
     if (!path) {
         return result
@@ -128,11 +140,13 @@ function enrichDomainInfo(result, fullClass) {
     let r = reg.exec(text)
     while (r) {
         result[r[2]] = {
-            $type: r[1],
+            $type: r[1].length === 1 ? reget(result.$type, /[^<>]+<(.+)>/) : r[1],
             $desc: getFieldDesc(text, r[2])
         }
 
-        enrichDomainInfo(result[r[2]], getFullClass(result[r[2]].$type, text))
+        enrichDomainInfo(result[r[2]],
+            getFullClass(result[r[2]].$type.replace(/<.*>/g, ''), r[1].length === 1 ? oriText:text),
+            text)
         r = reg.exec(text)
     }
     return result
