@@ -141,7 +141,7 @@ function enrichDomainInfo(result, fullClass, oriText) {
     let r = reg.exec(text)
     while (r) {
         result[r[2]] = {
-            $type: r[1].length === 1 ? reget(result.$type, /[^<>]+<(.+)>/) : r[1],
+            $type: r[1].length === 1 ? (trim(reget(result.$type, /[^<>]+<(.+)>/)) || "Object") : r[1],
             $desc: getFieldDesc(text, r[2])
         }
 
