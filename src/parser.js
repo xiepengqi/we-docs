@@ -70,10 +70,21 @@ function eachJavaFile(path) {
         let classInfo = config.data[module][className]
         classInfo.$desc = getClassDesc(text, className)
         classInfo.$package = getPackage(text)
+
+        classInfo.$path = reget(classInfo.$desc, /@RequestMapping\(\"(.*)\"\)/)
+        if (classInfo.$path) {
+            classInfo.$path = "/" + classInfo.$path.split("/").filter(item => item).join("/")
+        }
         getHttpMethods(text).forEach(item => {
             register(module, className, item)
             classInfo[item].$desc = getMethodDesc(text, item)
             classInfo[item].$package = getPackage(text)
+            classInfo[item].$path = reget(classInfo[item].$desc, /@\w+Mapping\(\"(.*)\"\)/)
+            if (classInfo[item].$path) {
+                classInfo[item].$path = "/" + classInfo[item].$path.split("/").filter(item => item).join("/")
+            }
+            classInfo[item].$requestMethod = reget(classInfo[item].$desc, /@(\w+)Mapping/)
+            classInfo[item].$url = classInfo.$path + classInfo[item].$path
             enrichCommonMethodInfo(text, classInfo[item])
         })
     }
@@ -137,7 +148,7 @@ function enrichDomainInfo(result, fullClass, oriText) {
     let desc = getClassDesc(text, className)
     result.$desc = desc || result.$desc
 
-    let reg = /(?:private|public)\s+([^\s\.\-\(\)\=+]+)\s+([^\s\.\-\(\)\=+]+)\s*;/g
+    let reg = /\n\s+(?:private|public)?\s+([^\-\(\)\=\+;\*]+)\s+([^\s\.\-\(\)\=\+;\*]+)\s*;/g
     let r = reg.exec(text)
     while (r) {
         result[r[2]] = {
@@ -212,6 +223,7 @@ function register(module, className, methodName, info) {
     if (methodName && !config.data[module][className][methodName]) {
         config.data[module][className][methodName] = Object.assign({
             $name: methodName,
+            $module: module,
             $class: className,
             $label: methodName,
             $type: 'method'
