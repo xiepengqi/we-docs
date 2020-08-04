@@ -123,7 +123,7 @@ function enrichCommonMethodInfo(text, info) {
 
     info.params = {}
     let paramsStr = r[3].replace(/@[\S]+/g, '')
-    reg = new RegExp('\\s*([A-Z][a-zA-Z_0-9]+)\\s+(\\S+)\\s*,?', 'g')
+    reg = new RegExp('\\s*([A-Z][a-zA-Z_0-9<>,\s]+[^\s,])\\s+(\\S+)\\s*,?', 'g')
     let nr = reg.exec(paramsStr)
     while (nr) {
         let x = {
@@ -137,18 +137,27 @@ function enrichCommonMethodInfo(text, info) {
 }
 
 function enrichDomainInfo(result, fullClass, oriText) {
-    let path = pathMap[fullClass]
-    if (!path) {
-        return result
+    let path = pathMap[fullClass] || ''
+
+    let text
+    if (path) {
+        text = String(fs.readFileSync(path));
+    } else {
+        if (result.$type.indexOf('<') !== -1) {
+            text = `
+            private T item;
+            `
+        } else {
+            return;
+        }
     }
 
-    let text = String(fs.readFileSync(path));
     let [module, className] = parsePath(path)
 
     let desc = getClassDesc(text, className)
     result.$desc = desc || result.$desc
 
-    let reg = /\n\s+(?:private|public)?\s+([^\-\(\)\=\+;\*]+)\s+([^\s\.\-\(\)\=\+;\*]+)\s*;/g
+    let reg = /\n\s+(?:private|public|protected)?\s+([^\-\(\)\=\+;\*]+)\s+([^\s\.\-\(\)\=\+;\*]+)\s*;/g
     let r = reg.exec(text)
     while (r) {
         result[r[2]] = {
@@ -190,6 +199,9 @@ function getDubboMethods(text) {
 }
 
 function parsePath(path) {
+    if (!path) {
+        return ['', '']
+    }
     let strs = path.replace(workDir, '').split('/').filter(item => item)
     return Object.values({
         module: reget(path, /.*\/([^/]+)\/src\/main\/java.*/),
