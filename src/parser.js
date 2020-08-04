@@ -170,6 +170,14 @@ function enrichDomainInfo(result, fullClass, oriText) {
             text)
         r = reg.exec(text)
     }
+
+    let [implClass, implPath ] = getImpl(text)
+    if (implClass) {
+        let temp = result.$type
+        result.$type = implClass
+        enrichDomainInfo(result, getFullClass(implClass.replace(/<.*>/g, ''), text), text)
+        result.$type = temp
+    }
     return result
 }
 
@@ -244,7 +252,7 @@ function register(module, className, methodName, info) {
 }
 
 function getImpl(text) {
-    let interfaceName = reget(text, /public class \S+ implements (\S+) {/)
+    let interfaceName = reget(text, /public\s+class\s+\S+\s+(?:implements|extends)\s+(\S+)\s+{/)
 
     return Object.values({
         implClass: interfaceName,
