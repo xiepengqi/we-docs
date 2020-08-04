@@ -50,7 +50,7 @@ function process() {
                 .map(item => {
                     item = trim(item)
                     let [module, className] = parsePath(item)
-                    pathMap[reget(item, new RegExp('/src/main/java/(.+).java')).replace(/\//g, '.')] = item
+                    pathMap[reget(item, new RegExp('/src/main/java/(.+)\.java')).replace(/\//g, '.')] = item
                     pathMap[className] = item
                     return item
                 })
@@ -119,7 +119,7 @@ function enrichCommonMethodInfo(text, info) {
     info.result = {
         $type: r[2]
     }
-    enrichDomainInfo(info.result, getFullClass(info.result.$type.replace(/<.*>/g, ''), text), text)
+    enrichDomainInfo(info.result, getFullClass(info.result.$type.replace(/<.*>/g, ''), text))
 
     info.params = {}
     let paramsStr = r[3].replace(/@[\S]+/g, '')
@@ -130,13 +130,13 @@ function enrichCommonMethodInfo(text, info) {
             $type: nr[1]
         }
         info.params[nr[2]] = x
-        enrichDomainInfo(x, getFullClass(x.$type.replace(/<.*>/g, ''), text), text)
+        enrichDomainInfo(x, getFullClass(x.$type.replace(/<.*>/g, ''), text))
 
         nr = reg.exec(paramsStr)
     }
 }
 
-function enrichDomainInfo(result, fullClass, oriText) {
+function enrichDomainInfo(result, fullClass) {
     let path = pathMap[fullClass] || ''
 
     let text
@@ -161,12 +161,12 @@ function enrichDomainInfo(result, fullClass, oriText) {
     let r = reg.exec(text)
     while (r) {
         result[r[2]] = {
-            $type: r[1].length === 1 ? (trim(reget(result.$type, /[^<>]+<(.+)>/)) || "Object") : r[1],
+            $type: r[1].match(/(<[A-Z]>|^[A-Z]$)/) ? r[1].replace(/(<[A-Z]>|^[A-Z]$)/, (trim(reget(result.$type, /[^<>]+<(.+)>/)) || "Object")) : r[1],
             $desc: getFieldDesc(text, r[2])
         }
 
         enrichDomainInfo(result[r[2]],
-            getFullClass(result[r[2]].$type.replace(/<.*>/g, ''), r[1].length === 1 ? oriText:text),
+            getFullClass(result[r[2]].$type.replace(/<.*>/g, '')),
             text)
         r = reg.exec(text)
     }
@@ -175,7 +175,7 @@ function enrichDomainInfo(result, fullClass, oriText) {
     if (implClass) {
         let temp = result.$type
         result.$type = implClass
-        enrichDomainInfo(result, getFullClass(implClass.replace(/<.*>/g, ''), text), text)
+        enrichDomainInfo(result, getFullClass(implClass.replace(/<.*>/g, ''), text))
         result.$type = temp
     }
     return result
@@ -252,7 +252,7 @@ function register(module, className, methodName, info) {
 }
 
 function getImpl(text) {
-    let interfaceName = reget(text, /public\s+class\s+\S+\s+(?:implements|extends)\s+(\S+)\s+{/)
+    let interfaceName = reget(text, /public\s+class\s+\S+\s+(?:implements|extends)\s+(\S+)/)
 
     return Object.values({
         implClass: interfaceName,
@@ -330,7 +330,9 @@ function initWorkPj(){
 
 function e(cmd){
     return new Promise(resolve => {
-        exec(`${cmd}`,
+        exec(`${cmd}`, {
+                maxBuffer: 2000 * 1024 //quick fix
+            },
             function (err, stdout, stderr) {
 //                 console.log(`-------------${cmd}----------------
 // stdout: ${trim(stdout)}
