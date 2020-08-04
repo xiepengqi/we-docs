@@ -154,8 +154,9 @@ function enrichDomainInfo(result, fullClass) {
 
     let [module, className] = parsePath(path)
 
-    let desc = getClassDesc(text, className)
-    result.$desc = desc || result.$desc
+    if (! result.$desc) {
+        result.$desc = getClassDesc(text, className)
+    }
 
     let reg = /\n\s+(?:private|public|protected)?\s+([^\-\(\)\=\+;\*]+)\s+([^\s\.\-\(\)\=\+;\*]+)\s*;/g
     let r = reg.exec(text)
