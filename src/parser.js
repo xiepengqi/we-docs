@@ -157,8 +157,8 @@ function enrichDomainInfo(result, fullClass) {
     if (! result.$desc) {
         result.$desc = getClassDesc(text, className)
     }
-
-    let reg = /\n\s+(?:private|public|protected)?\s+([^\-\(\)\=\+;\*]+)\s+([^\s\.\-\(\)\=\+;\*]+)\s*;/g
+    text = text.replace(/ return.*;/g, '')
+    let reg = /\n\s+(?:private|public|protected)?\s+([^\-\(\)\=\+;\*@]+)\s+([a-zA-Z][a-zA-Z0-9_]*)\s*;/g
     let r = reg.exec(text)
     while (r) {
         result[r[2]] = {
