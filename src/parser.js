@@ -13,7 +13,11 @@ doProcess()
 
 function doProcess(){
     try {
-        process()
+        let time = Date.now()
+        console.log("begin load data ......")
+        process().then(() => {
+            console.log("done " + ((Date.now() - time)/1000) + 's')
+        })
     } catch (e) {
         console.log(JSON.stringify(e))
     }
@@ -21,7 +25,7 @@ function doProcess(){
 }
 
 function process() {
-    e(`echo ~`)
+    return e(`echo ~`)
         .then(item => {
             // 确认家目录
             homeDir = item
@@ -39,10 +43,10 @@ function process() {
                 throw new Error(`workDir [${workDir}] 不合法，必须在家目录下`)
             }
         })
-        .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
-        .then(() => {
-            return initWorkPj()
-        })
+        // .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
+        // .then(() => {
+        //     return initWorkPj()
+        // })
         .then(() => e(`find ${workDir} -name '*.java'`))
         .then((item)=> {
             item.split("\n").map(item => item)
@@ -55,9 +59,6 @@ function process() {
                     return item
                 })
                 .forEach(item => eachJavaFile(item))
-        })
-        .then(() => {
-            console.log("refreshed.....")
         })
 }
 
@@ -183,7 +184,7 @@ function enrichDomainInfo(result, fullClass) {
 }
 
 function getHttpMethods(text) {
-    let reg = /[\{;][^\{;]+@.+Mapping\([^\{;]+public\s+\S+\s+([\w\d]+)\s*\(/g
+    let reg = /[\{;][^\{;]+@.+Mapping\([^;]+public\s+\S+\s+([\w\d]+)\s*\(/g
 
     let result = []
     let r = reg.exec(text)
@@ -270,21 +271,22 @@ function getPackage(text) {
 }
 
 function getClassDesc(text, className) {
-    let reg = new RegExp('[;]([^;]+)public\\s+(?:class|interface)\\s+'+className+'\\s*')
+    let reg = new RegExp('[;]([^;]+)public\\s+(?:class|interface|abstract class)\\s+'+className+'\\s*')
 
     let r = reg.exec(text)
     return r ? trim(r[1]): ""
 }
 
 function getMethodDesc(text, methodName) {
-    let reg = new RegExp('[\\{\\};]([^;\\}\\{]+)\\s+(?:public)?\\s+\\S+\\s+'+methodName+'\\s*\\(')
+    text = text.replace(/public\s+(?:class|interface|abstract class)[^\{]+{/, ";")
+    let reg = new RegExp('[\\{\\};]\\s*\n\\s*([/@][^;]+)\\s+(?:public)?\\s+\\S+\\s+'+methodName+'\\s*\\(')
 
     let r = reg.exec(text)
     return r ? trim(r[1]): ""
 }
 
 function getFieldDesc(text, fieldName) {
-    let reg = new RegExp('[;\\{]\\s+([^;\\{]+)(?:private|public).*'+fieldName+'\\s*;')
+    let reg = new RegExp('[\\{\\};]\\s*\n\\s*([/@][^;]+)(?:private|public|protected).*'+fieldName+'\\s*;')
 
     let r = reg.exec(text)
     return r ? trim(r[1]): ""

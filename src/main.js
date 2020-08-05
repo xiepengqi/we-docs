@@ -1,5 +1,4 @@
 try{
-    require("./parser")
     const config = require("./config")
     const server = require('server');
     const { get } = server.router;
@@ -13,6 +12,8 @@ try{
 
     console.log("started", JSON.stringify(serverInfo))
     console.log(`http://localhost:${serverInfo.port}`)
+
+    require("./parser")
 }catch (e) {
     console.log(e)
 }
