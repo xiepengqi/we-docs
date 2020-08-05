@@ -39,10 +39,10 @@ function process() {
                 throw new Error(`workDir [${workDir}] 不合法，必须在家目录下`)
             }
         })
-        // .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
-        // .then(() => {
-        //     return initWorkPj()
-        // })
+        .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
+        .then(() => {
+            return initWorkPj()
+        })
         .then(() => e(`find ${workDir} -name '*.java'`))
         .then((item)=> {
             item.split("\n").map(item => item)
