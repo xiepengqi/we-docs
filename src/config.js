@@ -3,5 +3,5 @@ module.exports = {
     sourceDir: "/Users/xiepengqi/IdeaProjects",
     serverPort: 8080,
     gitRemoteInclude: "phabricator.huobidev.com",
-    refreshSec: 60
+    refreshSec: 180
 }

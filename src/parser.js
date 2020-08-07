@@ -14,7 +14,7 @@ doProcess()
 function doProcess(){
     try {
         let time = Date.now()
-        console.log("begin load data ......")
+        console.log("begin load data " + new Date())
         process().then(() => {
             console.log("done " + ((Date.now() - time)/1000) + 's')
         })
@@ -43,10 +43,10 @@ function process() {
                 throw new Error(`workDir [${workDir}] 不合法，必须在家目录下`)
             }
         })
-        // .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
-        // .then(() => {
-        //     return initWorkPj()
-        // })
+        .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
+        .then(() => {
+            return initWorkPj()
+        })
         .then(() => e(`find ${workDir} -name '*.java'`))
         .then((item)=> {
             item.split("\n").map(item => item)
@@ -286,6 +286,7 @@ function getMethodDesc(text, methodName) {
 }
 
 function getFieldDesc(text, fieldName) {
+    text = text.replace(/public\s+(?:class|interface|abstract class)[^\{]+{/, ";")
     let reg = new RegExp('[\\{\\};]\\s*\n\\s*([/@][^;]+)(?:private|public|protected).*'+fieldName+'\\s*;')
 
     let r = reg.exec(text)
