@@ -5,6 +5,15 @@ import Element from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import './util/index'
 import store from './store'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/default.css'
+
+Vue.directive('highlight', (el) => {
+  const blocks = el.querySelectorAll('pre code')
+  blocks.forEach((block) => {
+    hljs.highlightBlock(block)
+  })
+})
 
 Vue.use(Element)
 

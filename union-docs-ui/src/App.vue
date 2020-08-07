@@ -4,17 +4,15 @@
       <left-nav :menus="menus" />
     </el-aside>
     <el-main>
-      <el-input
-        type="textarea"
-        :value="JSON.stringify($store.state.content, null, 2)"
-        :autosize="{ minRows: 30, maxRows: 100}"
-      />
+      <div v-highlight v-html="htmlDoc" />
     </el-main>
   </el-container>
 </template>
 
 <script>
 import LeftNav from './components/LeftNav'
+import marked from 'marked'
+
 export default {
   components: {
     LeftNav
@@ -24,30 +22,65 @@ export default {
       menus: {}
     }
   },
+  computed: {
+    htmlDoc() {
+      return marked(this.buildMd(this.$store.state.content))
+    }
+  },
   mounted() {
     this.$http.get('/data').then(resp => {
       this.menus = resp.data
     })
+    marked.setOptions({
+      renderer: new marked.Renderer(),
+      gfm: true,
+      tables: true,
+      breaks: false,
+      pedantic: false,
+      smartLists: true,
+      sanitize: true,
+      smartypants: false
+    })
+  },
+  methods: {
+    buildMd(json) {
+      const httpInfo = `
+${json.$url ? `URL: ${json.$url}` : ''}
+
+${json.$requestMethod ? `Method: ${json.$requestMethod}` : ''}
+`
+      const desc = `
+\`\`\`
+${json.$desc || ''}
+${json.$profile || ''}
+\`\`\`
+`
+      const params = !json.$params ? '' : `
+#### Params
+\`\`\`
+${JSON.stringify(json.$params, null, 2)}
+\`\`\`
+`
+      const result = !json.$result ? '' : `
+#### Result
+\`\`\`
+${JSON.stringify(json.$result, null, 2)}
+\`\`\`
+`
+      return `
+### ${json.$label}
+${httpInfo}
+${desc}
+${params}
+${result}
+`
+    }
   }
 }
 </script>
 
 <style scoped lang="scss">
   #app {
-    .el-header{
-      background-color: #d7dade;
-      color: #333;
-      line-height: 60px;
-    }
-    .el-aside {
-      color: #333;
-      line-height: 500px;
-    }
 
-    .el-main {
-      background-color: #e4e9ee;
-      color: #333;
-      line-height: 500px;
-    }
   }
 </style>

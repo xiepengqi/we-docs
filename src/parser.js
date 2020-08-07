@@ -117,12 +117,12 @@ function enrichCommonMethodInfo(text, info) {
     let r = reg.exec(text)
 
     info.$profile = trim(r[1])
-    info.result = {
+    info.$result = {
         $type: r[2]
     }
-    enrichDomainInfo(info.result, getFullClass(info.result.$type.replace(/<.*>/g, ''), text))
+    enrichDomainInfo(info.$result, getFullClass(info.$result.$type.replace(/<.*>/g, ''), text))
 
-    info.params = {}
+    info.$params = {}
     let paramsStr = r[3].replace(/@[\S]+/g, '')
     reg = new RegExp('\\s*([A-Z][a-zA-Z_0-9<>,\s]+[^\s,])\\s+(\\S+)\\s*,?', 'g')
     let nr = reg.exec(paramsStr)
@@ -130,7 +130,7 @@ function enrichCommonMethodInfo(text, info) {
         let x = {
             $type: nr[1]
         }
-        info.params[nr[2]] = x
+        info.$params[nr[2]] = x
         enrichDomainInfo(x, getFullClass(x.$type.replace(/<.*>/g, ''), text))
 
         nr = reg.exec(paramsStr)
