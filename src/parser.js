@@ -116,7 +116,7 @@ function enrichCommonMethodInfo(text, info) {
     let reg = new RegExp('[\\{\\};][^;\\}\\{]+\\s+((?:public)?\\s+(\\S+)\\s+'+info.$name+'\\s*\\(([^\\{\\};]*)\\))')
     let r = reg.exec(text)
 
-    info.profile = trim(r[1])
+    info.$profile = trim(r[1])
     info.result = {
         $type: r[2]
     }
@@ -159,7 +159,7 @@ function enrichDomainInfo(result, fullClass) {
         result.$desc = getClassDesc(text, className)
     }
     text = text.replace(/ return.*;/g, '')
-    let reg = /\n\s+(?:private|public|protected)?\s+([^\-\(\)\=\+;\*@]+)\s+([a-zA-Z][a-zA-Z0-9_]*)\s*;/g
+    let reg = /\n\s+(?:private|public|protected)?\s+([^\n\-\(\)\=\+;\*@]+)\s+([a-zA-Z][a-zA-Z0-9_]*)\s*;/g
     let r = reg.exec(text)
     while (r) {
         result[r[2]] = {
