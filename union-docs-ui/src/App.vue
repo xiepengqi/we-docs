@@ -44,6 +44,13 @@ export default {
   },
   methods: {
     buildMd(json) {
+      const repoInfo = `
+#### Git Repo
+\`\`\`
+${json.$repo ? json.$repo : ''}
+${json.$branch ? json.$branch : ''}
+\`\`\`
+`
       const httpInfo = `
 ${json.$url ? `URL: ${json.$url}` : ''}
 
@@ -71,6 +78,7 @@ ${JSON.stringify(json.$result, null, 2)}
 ### ${json.$label}
 ${httpInfo}
 ${desc}
+${repoInfo}
 ${params}
 ${result}
 `

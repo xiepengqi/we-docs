@@ -7,6 +7,7 @@ let sourceDir = trim(config.sourceDir).replace(/\/+/g, '/').replace(/\/$/, '')
 let workDir = trim(config.workDir).replace(/\/+/g, '/').replace(/\/$/, '')
 
 let pathMap = {}
+let repoMap = {}
 config.data = {}
 
 doProcess()
@@ -67,7 +68,7 @@ function eachJavaFile(path) {
     let [module, className] = parsePath(path)
 
     if (text.match(/(?:@RestController|@Controller)/)) {
-        register(module, className)
+        register(path, module, className)
         let classInfo = config.data[module][className]
         classInfo.$desc = getClassDesc(text, className)
         classInfo.$package = getPackage(text)
@@ -77,7 +78,7 @@ function eachJavaFile(path) {
             classInfo.$path = "/" + classInfo.$path.split("/").filter(item => item).join("/")
         }
         getHttpMethods(text).forEach(item => {
-            register(module, className, item)
+            register(path, module, className, item)
             classInfo[item].$desc = getMethodDesc(text, item)
             classInfo[item].$package = getPackage(text)
             classInfo[item].$path = reget(classInfo[item].$desc, /@\w+Mapping\(\"(.*)\"\)/)
@@ -91,7 +92,7 @@ function eachJavaFile(path) {
     }
     if (text.indexOf('org.apache.dubbo.config.annotation.Service') !== -1 &&
         text.indexOf('@Service') !== -1) {
-        register(module, className)
+        register(path, module, className)
 
         let classInfo = config.data[module][className]
         let [implClass, implPath] = getImpl(text)
@@ -103,7 +104,7 @@ function eachJavaFile(path) {
         classInfo.$package = getPackage(text)
 
         getDubboMethods(text).forEach(item => {
-            register(module, className, item)
+            register(path, module, className, item)
 
             classInfo[item].$desc = getMethodDesc(implText, item) || getMethodDesc(text, item)
             classInfo[item].$package = getPackage(text)
@@ -224,12 +225,24 @@ function reget(str, reg) {
     return r ? trim(r[1]): ""
 }
 
-function register(module, className, methodName, info) {
+function getRepoInfo(path) {
+    for (let key of Object.keys(repoMap)) {
+        if (path.indexOf(key) !== -1) {
+            return repoMap[key]
+        }
+    }
+    return {}
+}
+
+function register(path, module, className, methodName, info) {
+    const repoInfo = getRepoInfo(path)
     if (module && !config.data[module]) {
         config.data[module] = Object.assign({
             $name: module,
             $label: module,
-            $type: 'module'
+            $type: 'module',
+            $branch: repoInfo.$branch,
+            $repo: repoInfo.$repo
         }, config.data[module] || {})
     }
 
@@ -238,7 +251,9 @@ function register(module, className, methodName, info) {
             $name: className,
             $module: module,
             $label: className,
-            $type: 'class'
+            $type: 'class',
+            $branch: repoInfo.$branch,
+            $repo: repoInfo.$repo
         }, config.data[module][className] || {})
     }
 
@@ -248,7 +263,9 @@ function register(module, className, methodName, info) {
             $module: module,
             $class: className,
             $label: methodName,
-            $type: 'method'
+            $type: 'method',
+            $branch: repoInfo.$branch,
+            $repo: repoInfo.$repo
         },methodName && !config.data[module][className][methodName] || {},info || {})
     }
 }
@@ -298,15 +315,21 @@ function initWorkPj(){
         .then(stdout => {
             return Promise.all(stdout.split("\n").filter(item => item).map(item =>{
                 let path = `${sourceDir}/${item}`
-                return e(`cd ${path}; pwd; git remote -v | head -1`)
+                return e(`cd ${path}; pwd; git remote -v | head -1; git status | head -1`)
             }))
         })
         .then(results => {
             let paths = []
             for (let result of results) {
-                let strs = result.split("\n")
+                let strs = result.split("\n").filter(item => item)
                 if (strs.length > 1 && strs[1].indexOf(config.gitRemoteInclude) !== -1) {
                     paths.push(strs[0])
+                    let workPath = strs[0].replace(sourceDir, workDir)
+                    if (!repoMap[workPath]) {
+                        repoMap[workPath] = {}
+                    }
+                    repoMap[workPath].$branch = strs[2]
+                    repoMap[workPath].$repo = strs[1]
                 }
             }
             return Promise.all(paths.map(item => {
@@ -338,10 +361,6 @@ function e(cmd){
                 maxBuffer: 2000 * 1024 //quick fix
             },
             function (err, stdout, stderr) {
-//                 console.log(`-------------${cmd}----------------
-// stdout: ${trim(stdout)}
-// stderr: ${trim(stderr)}
-// `)
                 resolve(trim(stdout))
             });
     })
