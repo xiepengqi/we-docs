@@ -5,7 +5,7 @@ module.exports = {
     gitRemoteInclude: "phabricator.huobidev.com",
     refreshSec: 180,
     data: {
-        $label: 'GCPS-DOCS',
+        $title: 'GCPS-DOCS',
         $desc: 'gcps union docs'
     }
 }

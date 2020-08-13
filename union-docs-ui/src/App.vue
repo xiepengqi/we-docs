@@ -35,7 +35,7 @@ export default {
   },
   mounted() {
     this.$http.get('/data').then(resp => {
-      this.menus = resp.data
+      this.menus = this.buildMenus(resp.data)
       this.$store.state.content = this.menus
     })
     marked.setOptions({
@@ -50,6 +50,48 @@ export default {
     })
   },
   methods: {
+    buildMatchStr(...strs) {
+      const x = ''
+      if (!strs) {
+        return x
+      }
+      return strs.map(item => item ? item.trim() : '')
+        .filter(item => item).join(' ')
+    },
+    buildMenus(data) {
+      const text = location.href.split('?', 2)[1] || ''
+      const strs = text.split('/')
+      this.filterData(data, strs[0])
+      for (const module of Object.values(data)) {
+        this.filterData(module, strs[1])
+        for (const clazz of Object.values(module)) {
+          this.filterData(clazz, strs[2])
+        }
+      }
+
+      return data
+    },
+    filterData(data, str) {
+      if ((typeof data) !== 'object') {
+        return
+      }
+      if (str) {
+        for (const del of Object.keys(data).filter(item => {
+          if (item.startsWith('$')) {
+            return false
+          }
+          const matchStr = this.buildMatchStr(item, data[item].$label, data[item].$name, data[item].$desc)
+          for (const k of str.split('\s+')) {
+            if (matchStr.toUpperCase().indexOf(k.toUpperCase()) === -1) {
+              return true
+            }
+          }
+          return false
+        })) {
+          delete data[del]
+        }
+      }
+    },
     buildMd(json) {
       const repoInfo = (json.$repo || json.$branch) ? `
 #### Git Repo
@@ -82,7 +124,7 @@ ${JSON.stringify(json.$result, null, 2)}
 \`\`\`
 `
       return `
-### ${json.$label}
+### ${json.$title}
 ${httpInfo}
 ${desc}
 ${repoInfo}

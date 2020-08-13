@@ -5,7 +5,7 @@
     @open="handleOpen"
     @close="handleClose"
   >
-    <menu-elem v-for="(menu, index) in Object.values(getMenus(menus))" :key="menu.$label" :index="String(index)" :data="menu" />
+    <menu-elem v-for="(menu, index) in Object.values(getMenus(menus))" :key="menu.$name" :index="String(index)" :data="menu" />
   </el-menu>
 </template>
 

@@ -3,7 +3,7 @@
     <template slot="title">
       <span @click="setContent">{{ data.$label }}</span>
     </template>
-    <menu-elem v-for="(menu, i) in child" :key="menu.$label" :data="menu" :index="index + i" />
+    <menu-elem v-for="(menu, i) in child" :key="menu.$name" :data="menu" :index="index + i" />
   </el-submenu>
 
   <el-menu-item v-else @click="setContent">{{ data.$label }}</el-menu-item>

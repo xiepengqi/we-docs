@@ -9,6 +9,10 @@ let workDir = trim(config.workDir).replace(/\/+/g, '/').replace(/\/$/, '')
 let pathMap = {}
 let repoMap = {}
 
+Object.keys(config.data).filter(item => !item.startsWith("$")).forEach(item => {
+    delete config.data[item]
+})
+
 doProcess()
 
 function doProcess(){
@@ -71,7 +75,8 @@ function eachJavaFile(path) {
         let classInfo = config.data[module][className]
         classInfo.$desc = getClassDesc(text, className)
         classInfo.$package = getPackage(text)
-        classInfo.$label = getTitle(classInfo.$desc) || classInfo.$label
+        classInfo.$label = getCnLabel(classInfo.$desc) || classInfo.$label
+        classInfo.$profile = reget(text, /(public\s+(?:class|interface|abstract class)[^\{]+){/)
 
         classInfo.$path = reget(classInfo.$desc, /@RequestMapping\(\"(.*)\"\)/)
         if (classInfo.$path) {
@@ -80,8 +85,8 @@ function eachJavaFile(path) {
         getHttpMethods(text).forEach(item => {
             register(path, module, className, item)
             classInfo[item].$desc = getMethodDesc(text, item)
-            classInfo[item].$label = getTitle(classInfo[item].$desc) || classInfo[item].$label
-            classInfo[item].$package = getPackage(text)
+            classInfo[item].$label = getCnLabel(classInfo[item].$desc) || classInfo[item].$label
+            classInfo[item].$package = classInfo.$package
             classInfo[item].$path = reget(classInfo[item].$desc, /@\w+Mapping\(\"(.*)\"\)/)
             if (classInfo[item].$path) {
                 classInfo[item].$path = "/" + classInfo[item].$path.split("/").filter(item => item).join("/")
@@ -102,24 +107,28 @@ function eachJavaFile(path) {
 
 
         classInfo.$desc = getClassDesc(implText, implClass) ||  getClassDesc(text, className)
-        classInfo.$label = getTitle(classInfo.$desc) || implClass || className
-        classInfo.$package = getPackage(text)
+        classInfo.$label = getCnLabel(classInfo.$desc) || implClass || className
+        classInfo.$title = module + '/' + (implClass || className)
+        classInfo.$package = getPackage(implText || text)
+        classInfo.$profile = reget(implText || text, /(public\s+(?:class|interface|abstract class)[^\{]+){/)
 
         getDubboMethods(text).forEach(item => {
             register(path, module, className, item)
 
             classInfo[item].$desc = getMethodDesc(implText, item) || getMethodDesc(text, item)
-            classInfo[item].$label = getTitle(classInfo[item].$desc) || classInfo[item].$label
-            classInfo[item].$package = getPackage(text)
+            classInfo[item].$label = getCnLabel(classInfo[item].$desc) || classInfo[item].$label
+            classInfo[item].$title = classInfo.$title + '.' + classInfo[item].$name
+            classInfo[item].$package = classInfo.$package
             enrichCommonMethodInfo(implText || text, classInfo[item])
         })
     }
 }
 
-function getTitle(str) {
+function getCnLabel(str) {
     return reget(str, /"(.*?[\u4e00-\u9fa5].*?)"/) ||
-        reget(str, /\/([^:：,@\*\n.，]*?[\u4e00-\u9fa5][^:：,@\*\n.，]*?)\n/) ||
-        reget(str, /\*([^:：,@\*\n.，]*?[\u4e00-\u9fa5][^:：,@\*\n.，]*?)\n/)
+        reget(str, /@Description ([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/) ||
+        reget(str, /\/([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/) ||
+        reget(str, /\*([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/)
 }
 
 function enrichCommonMethodInfo(text, info) {
@@ -249,6 +258,7 @@ function register(path, module, className, methodName, info) {
         config.data[module] = Object.assign({
             $name: module,
             $label: module,
+            $title: module,
             $type: 'module',
             $branch: repoInfo.$branch,
             $repo: repoInfo.$repo
@@ -260,6 +270,7 @@ function register(path, module, className, methodName, info) {
             $name: className,
             $module: module,
             $label: className,
+            $title: module+'/'+className,
             $type: 'class',
             $branch: repoInfo.$branch,
             $repo: repoInfo.$repo
@@ -272,6 +283,7 @@ function register(path, module, className, methodName, info) {
             $module: module,
             $class: className,
             $label: methodName,
+            $title: config.data[module][className].$title + '.' + methodName,
             $type: 'method',
             $branch: repoInfo.$branch,
             $repo: repoInfo.$repo
