@@ -7,7 +7,8 @@
     element-loading-background="rgba(0, 0, 0, 0.8)"
   >
     <el-aside>
-      <left-nav :menus="menus" />
+      <el-input v-model="searchStr" placeholder="select..." class="search-input" clearable />
+      <left-nav :menus="menus" class="left-nav" />
     </el-aside>
     <el-main>
       <div v-if="Object.keys(menus).length > 0" v-highlight v-html="htmlDoc" />
@@ -25,6 +26,7 @@ export default {
   },
   data() {
     return {
+      searchStr: '',
       menus: {}
     }
   },
@@ -33,9 +35,20 @@ export default {
       return marked(this.buildMd(this.$store.state.content))
     }
   },
+  watch: {
+    searchStr() {
+      for (const module of Object.values(this.menus)) {
+        for (const clazz of Object.values(module)) {
+          this.filterData(clazz, this.searchStr)
+          this.checkHidden(clazz)
+        }
+        this.checkHidden(module)
+      }
+    }
+  },
   mounted() {
     this.$http.get('/data').then(resp => {
-      this.menus = this.buildMenus(resp.data)
+      this.menus = resp.data
       this.$store.state.content = this.menus
     })
     marked.setOptions({
@@ -50,6 +63,23 @@ export default {
     })
   },
   methods: {
+    checkHidden(data) {
+      if ((typeof data) !== 'object') {
+        return
+      }
+      let i = 0
+      for (const value of Object.values(data)) {
+        if ((typeof value) === 'object' && !value.$hidden) {
+          i++
+          break
+        }
+      }
+      if (i <= 0) {
+        data.$hidden = true
+      } else {
+        data.$hidden = false
+      }
+    },
     buildMatchStr(...strs) {
       const x = ''
       if (!strs) {
@@ -58,39 +88,29 @@ export default {
       return strs.map(item => item ? item.trim() : '')
         .filter(item => item).join(' ')
     },
-    buildMenus(data) {
-      const text = location.href.split('?', 2)[1] || ''
-      const strs = text.split('/')
-      this.filterData(data, strs[0])
-      for (const module of Object.values(data)) {
-        this.filterData(module, strs[1])
-        for (const clazz of Object.values(module)) {
-          this.filterData(clazz, strs[2])
-        }
-      }
-
-      return data
-    },
     filterData(data, str) {
       if ((typeof data) !== 'object') {
         return
       }
-      if (str) {
-        for (const del of Object.keys(data).filter(item => {
-          if (item.startsWith('$')) {
-            return false
-          }
-          const matchStr = this.buildMatchStr(item, data[item].$label, data[item].$name, data[item].$desc)
-          for (const k of str.split('\s+')) {
-            if (matchStr.toUpperCase().indexOf(k.toUpperCase()) === -1) {
-              return true
-            }
-          }
-          return false
-        })) {
-          delete data[del]
+      str = str || ''
+      Object.keys(data).forEach(item => {
+        if ((typeof data[item]) !== 'object') {
+          return
         }
-      }
+        if (!str) {
+          data[item].$hidden = false
+          return
+        }
+        const matchStr = this.buildMatchStr(item, data[item].$name, data[item].$label, data[item].$title)
+        let hidden = false
+        for (const k of str.split(/\s+/).filter(item => item)) {
+          if (matchStr.toUpperCase().indexOf(k.toUpperCase()) === -1) {
+            hidden = true
+            break
+          }
+        }
+        data[item].$hidden = hidden
+      })
     },
     buildMd(json) {
       const repoInfo = (json.$repo || json.$branch) ? `
@@ -138,6 +158,13 @@ ${result}
 
 <style scoped lang="scss">
   #app {
-
+    .search-input {
+      position: fixed;
+      top: 5px;
+      width: 250px;
+      /deep/ .el-input__inner {
+        border: 0;
+      }
+    }
   }
 </style>

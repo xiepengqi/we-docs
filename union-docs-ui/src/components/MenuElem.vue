@@ -1,12 +1,14 @@
 <template>
-  <el-submenu v-if="data.$type !== 'method'" :index="index">
-    <template slot="title">
-      <span @click="setContent">{{ data.$label }}</span>
-    </template>
-    <menu-elem v-for="(menu, i) in child" :key="menu.$name" :data="menu" :index="index + i" />
-  </el-submenu>
+  <div v-if="!data.$hidden">
+    <el-submenu v-if="data.$type !== 'method'" :index="index">
+      <template slot="title">
+        <span @click="setContent">{{ data.$label }}</span>
+      </template>
+      <menu-elem v-for="(menu, i) in child" :key="menu.$name" :data="menu" :index="index + i" />
+    </el-submenu>
 
-  <el-menu-item v-else @click="setContent">{{ data.$label }}</el-menu-item>
+    <el-menu-item v-else @click="setContent">{{ data.$label }}</el-menu-item>
+  </div>
 
 </template>
 

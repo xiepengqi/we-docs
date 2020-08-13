@@ -125,8 +125,9 @@ function eachJavaFile(path) {
 }
 
 function getCnLabel(str) {
+    str = str + '\n'
     return reget(str, /"(.*?[\u4e00-\u9fa5].*?)"/) ||
-        reget(str, /@Description ([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/) ||
+        reget(str, /@Description([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/) ||
         reget(str, /\/([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/) ||
         reget(str, /\*([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/)
 }
@@ -260,6 +261,7 @@ function register(path, module, className, methodName, info) {
             $label: module,
             $title: module,
             $type: 'module',
+            $hidden: false,
             $branch: repoInfo.$branch,
             $repo: repoInfo.$repo
         }, config.data[module] || {})
@@ -272,6 +274,7 @@ function register(path, module, className, methodName, info) {
             $label: className,
             $title: module+'/'+className,
             $type: 'class',
+            $hidden: false,
             $branch: repoInfo.$branch,
             $repo: repoInfo.$repo
         }, config.data[module][className] || {})
@@ -282,6 +285,7 @@ function register(path, module, className, methodName, info) {
             $name: methodName,
             $module: module,
             $class: className,
+            $hidden: false,
             $label: methodName,
             $title: config.data[module][className].$title + '.' + methodName,
             $type: 'method',
