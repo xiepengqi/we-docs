@@ -8,7 +8,6 @@ let workDir = trim(config.workDir).replace(/\/+/g, '/').replace(/\/$/, '')
 
 let pathMap = {}
 let repoMap = {}
-config.data = {}
 
 doProcess()
 
@@ -44,10 +43,10 @@ function process() {
                 throw new Error(`workDir [${workDir}] 不合法，必须在家目录下`)
             }
         })
-        .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
-        .then(() => {
-            return initWorkPj()
-        })
+        // .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
+        // .then(() => {
+        //     return initWorkPj()
+        // })
         .then(() => e(`find ${workDir} -name '*.java'`))
         .then((item)=> {
             item.split("\n").map(item => item)
@@ -72,6 +71,7 @@ function eachJavaFile(path) {
         let classInfo = config.data[module][className]
         classInfo.$desc = getClassDesc(text, className)
         classInfo.$package = getPackage(text)
+        classInfo.$label = getTitle(classInfo.$desc) || classInfo.$label
 
         classInfo.$path = reget(classInfo.$desc, /@RequestMapping\(\"(.*)\"\)/)
         if (classInfo.$path) {
@@ -80,6 +80,7 @@ function eachJavaFile(path) {
         getHttpMethods(text).forEach(item => {
             register(path, module, className, item)
             classInfo[item].$desc = getMethodDesc(text, item)
+            classInfo[item].$label = getTitle(classInfo[item].$desc) || classInfo[item].$label
             classInfo[item].$package = getPackage(text)
             classInfo[item].$path = reget(classInfo[item].$desc, /@\w+Mapping\(\"(.*)\"\)/)
             if (classInfo[item].$path) {
@@ -99,18 +100,26 @@ function eachJavaFile(path) {
 
         let implText = implPath ? String(fs.readFileSync(implPath)):""
 
-        classInfo.$label = implClass || className
+
         classInfo.$desc = getClassDesc(implText, implClass) ||  getClassDesc(text, className)
+        classInfo.$label = getTitle(classInfo.$desc) || implClass || className
         classInfo.$package = getPackage(text)
 
         getDubboMethods(text).forEach(item => {
             register(path, module, className, item)
 
             classInfo[item].$desc = getMethodDesc(implText, item) || getMethodDesc(text, item)
+            classInfo[item].$label = getTitle(classInfo[item].$desc) || classInfo[item].$label
             classInfo[item].$package = getPackage(text)
             enrichCommonMethodInfo(implText || text, classInfo[item])
         })
     }
+}
+
+function getTitle(str) {
+    return reget(str, /"(.*?[\u4e00-\u9fa5].*?)"/) ||
+        reget(str, /\/([^:：,@\*\n.，]*?[\u4e00-\u9fa5][^:：,@\*\n.，]*?)\n/) ||
+        reget(str, /\*([^:：,@\*\n.，]*?[\u4e00-\u9fa5][^:：,@\*\n.，]*?)\n/)
 }
 
 function enrichCommonMethodInfo(text, info) {

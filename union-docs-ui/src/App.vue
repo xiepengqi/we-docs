@@ -1,10 +1,16 @@
 <template>
-  <el-container id="app">
+  <el-container
+    id="app"
+    v-loading.fullscreen.lock="Object.keys(menus).length <= 0"
+    element-loading-text="拼命加载中"
+    element-loading-spinner="el-icon-loading"
+    element-loading-background="rgba(0, 0, 0, 0.8)"
+  >
     <el-aside>
       <left-nav :menus="menus" />
     </el-aside>
     <el-main>
-      <div v-highlight v-html="htmlDoc" />
+      <div v-if="Object.keys(menus).length > 0" v-highlight v-html="htmlDoc" />
     </el-main>
   </el-container>
 </template>
@@ -30,6 +36,7 @@ export default {
   mounted() {
     this.$http.get('/data').then(resp => {
       this.menus = resp.data
+      this.$store.state.content = this.menus
     })
     marked.setOptions({
       renderer: new marked.Renderer(),
@@ -44,13 +51,13 @@ export default {
   },
   methods: {
     buildMd(json) {
-      const repoInfo = `
+      const repoInfo = (json.$repo || json.$branch) ? `
 #### Git Repo
 \`\`\`
 ${json.$repo ? json.$repo : ''}
 ${json.$branch ? json.$branch : ''}
 \`\`\`
-`
+` : ''
       const httpInfo = `
 ${json.$url ? `URL: ${json.$url}` : ''}
 

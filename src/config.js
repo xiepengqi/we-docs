@@ -3,5 +3,9 @@ module.exports = {
     sourceDir: "/Users/xiepengqi/IdeaProjects",
     serverPort: 8080,
     gitRemoteInclude: "phabricator.huobidev.com",
-    refreshSec: 180
+    refreshSec: 180,
+    data: {
+        $label: 'GCPS-DOCS',
+        $desc: 'gcps union docs'
+    }
 }

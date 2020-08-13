@@ -1,10 +1,11 @@
 <template>
   <el-menu
+    class="left-menu"
     unique-opened
     @open="handleOpen"
     @close="handleClose"
   >
-    <menu-elem v-for="(menu, index) in Object.values(menus)" :key="menu.$label" :index="String(index)" :data="menu" @click="setContent(menu)" />
+    <menu-elem v-for="(menu, index) in Object.values(getMenus(menus))" :key="menu.$label" :index="String(index)" :data="menu" />
   </el-menu>
 </template>
 
@@ -26,6 +27,15 @@ export default {
     }
   },
   methods: {
+    getMenus(menus) {
+      const temp = {}
+      for (const key of Object.keys(menus)) {
+        if (!key.startsWith('$')) {
+          temp[key] = menus[key]
+        }
+      }
+      return temp
+    },
     handleOpen(key, keyPath) {
     },
     handleClose(key, keyPath) {
@@ -35,6 +45,13 @@ export default {
 }
 </script>
 
-<style lang="scss">
-
+<style lang="scss" scoped>
+  .left-menu {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 260px;
+    overflow: auto;
+  }
 </style>
