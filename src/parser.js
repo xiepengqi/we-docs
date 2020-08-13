@@ -291,7 +291,7 @@ function getClassDesc(text, className) {
     let reg = new RegExp('[;]([^;]+)public\\s+(?:class|interface|abstract class)\\s+'+className+'\\s*')
 
     let r = reg.exec(text)
-    return r ? trim(r[1]): ""
+    return r ? trim(r[1]).replace(/\n\s*/g, '\n'): ""
 }
 
 function getMethodDesc(text, methodName) {
@@ -299,7 +299,7 @@ function getMethodDesc(text, methodName) {
     let reg = new RegExp('[\\{\\};]\\s*\n\\s*([/@][^;]+)\\s+(?:public)?\\s+\\S+\\s+'+methodName+'\\s*\\(')
 
     let r = reg.exec(text)
-    return r ? trim(r[1]): ""
+    return r ? trim(r[1]).replace(/\n\s*/g, '\n'): ""
 }
 
 function getFieldDesc(text, fieldName) {
@@ -307,7 +307,7 @@ function getFieldDesc(text, fieldName) {
     let reg = new RegExp('[\\{\\};]\\s*\n\\s*([/@][^;]+)(?:private|public|protected).*'+fieldName+'\\s*;')
 
     let r = reg.exec(text)
-    return r ? trim(r[1]): ""
+    return r ? trim(r[1]).replace(/\n\s*/g, '\n'): ""
 }
 
 function initWorkPj(){
