@@ -119,7 +119,7 @@ export default {
 
       return str.replace(/[\/\*]+/g, '').trim().replace(/[\n]+/g, '<br>')
     },
-    buildTable(data, title) {
+    buildTable(data, title, record) {
       let str = ''
       if (title) {
         str = `#### ${title}
@@ -143,8 +143,12 @@ export default {
           ext[item.$type] = item
         }
       }
-      for (const extElement of Object.values(ext)) {
-        str += this.buildTable(extElement)
+      for (const item of Object.values(ext)) {
+        if (record[item.$type]) {
+          continue
+        }
+        str += this.buildTable(item, null, record)
+        record[item.$type] = item
       }
       return str
     },
@@ -167,8 +171,8 @@ ${json.$desc || ''}
 ${json.$profile || ''}
 \`\`\`
 `
-      const params = !json.$params ? '' : this.buildTable(json.$params, 'Params')
-      const result = !json.$result ? '' : this.buildTable(json.$result, 'Result')
+      const params = !json.$params ? '' : this.buildTable(json.$params, 'Params', {})
+      const result = !json.$result ? '' : this.buildTable(json.$result, 'Result', {})
       return `
 ### ${json.$title}
 ${httpInfo}
