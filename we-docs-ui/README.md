@@ -1,4 +1,4 @@
-# union-docs-ui
+# we-docs-ui
 
 ## Project setup
 ```

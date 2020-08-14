@@ -5,7 +5,7 @@ try{
 
     let serverInfo = {
         port: config.serverPort,
-        public: '../union-docs-ui/dist/'
+        public: '../we-docs-ui/dist/'
     }
 
     server(serverInfo,[

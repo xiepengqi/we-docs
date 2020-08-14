@@ -7,6 +7,6 @@ module.exports = {
     refreshSec: 180,
     data: {
         $title: 'GCPS-DOCS',
-        $desc: 'gcps union docs'
+        $desc: 'gcps we docs'
     }
 }
