@@ -32,7 +32,7 @@ export default {
   },
   computed: {
     htmlDoc() {
-      return marked(this.buildMd(this.$store.state.content))
+      return marked(this.buildMd(this.$store.state.content)).replace(/&lt;br&gt;/g, '\n')
     }
   },
   watch: {
@@ -112,6 +112,42 @@ export default {
         data[item].$hidden = hidden
       })
     },
+    trimDesc(str) {
+      if (!str) {
+        return ''
+      }
+
+      return str.replace(/[\/\*]+/g, '').trim().replace(/[\n]+/g, '<br>')
+    },
+    buildTable(data, title) {
+      let str = ''
+      if (title) {
+        str = `#### ${title}
+`
+      } else {
+        str = `##### - ${data.$type}
+`
+      }
+      str += `|字段名称|类型|描述|
+|---|---|---|
+`
+      const ext = []
+      for (const key of Object.keys(data)) {
+        if (key.startsWith('$')) {
+          continue
+        }
+        const item = data[key]
+        str += `|${key}|${item.$type}|${this.trimDesc(item.$desc)}|
+`
+        if (Object.keys(item).filter(item => !item.startsWith('$')).length > 0) {
+          ext.push(item)
+        }
+      }
+      for (const extElement of ext) {
+        str += this.buildTable(extElement)
+      }
+      return str
+    },
     buildMd(json) {
       const repoInfo = (json.$repo || json.$branch) ? `
 #### Git Repo
@@ -131,18 +167,8 @@ ${json.$desc || ''}
 ${json.$profile || ''}
 \`\`\`
 `
-      const params = !json.$params ? '' : `
-#### Params
-\`\`\`
-${JSON.stringify(json.$params, null, 2)}
-\`\`\`
-`
-      const result = !json.$result ? '' : `
-#### Result
-\`\`\`
-${JSON.stringify(json.$result, null, 2)}
-\`\`\`
-`
+      const params = !json.$params ? '' : this.buildTable(json.$params, 'Params')
+      const result = !json.$result ? '' : this.buildTable(json.$result, 'Result')
       return `
 ### ${json.$title}
 ${httpInfo}
@@ -165,6 +191,33 @@ ${result}
       /deep/ .el-input__inner {
         border: 0;
       }
+    }
+  }
+</style>
+
+<style lang="scss">
+  table {
+    border-collapse: collapse;
+    white-space: pre-line;
+    border:1px solid;
+    font-size: 14px;
+
+    thead {
+      th
+      {
+        background-color: #e1dfe3;
+        width: 100px;
+      }
+    }
+    th {
+      border: 1px solid #cad9ea;
+      height: 30px;
+    }
+    td {
+      border: 1px solid #cad9ea;
+      height: 30px;
+      padding-left: 3px;
+      min-width: 250px;
     }
   }
 </style>
