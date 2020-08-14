@@ -152,6 +152,22 @@ export default {
       }
       return str
     },
+    buildErrorCode(data) {
+      if (!data) {
+        return ''
+      }
+      let str = `#### Error Code
+`
+      str += `|错误编码|错误信息|
+|---|---|
+`
+      for (const key of Object.keys(data)) {
+        str += `|${key}|${data[key]}|
+`
+      }
+
+      return str
+    },
     buildMd(json) {
       const repoInfo = (json.$repo || json.$branch) ? `
 #### Git Repo
@@ -173,6 +189,7 @@ ${json.$profile || ''}
 `
       const params = !json.$params ? '' : this.buildTable(json.$params, 'Params', {})
       const result = !json.$result ? '' : this.buildTable(json.$result, 'Result', {})
+      const errorCode = this.buildErrorCode(json.$errorCode)
       return `
 ### ${json.$title}
 ${httpInfo}
@@ -180,6 +197,7 @@ ${desc}
 ${repoInfo}
 ${params}
 ${result}
+${errorCode}
 `
     }
   }

@@ -47,10 +47,10 @@ function process() {
                 throw new Error(`workDir [${workDir}] 不合法，必须在家目录下`)
             }
         })
-        .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
-        .then(() => {
-            return initWorkPj()
-        })
+        // .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
+        // .then(() => {
+        //     return initWorkPj()
+        // })
         .then(() => e(`find ${workDir} -name '*.java'`))
         .then((item)=> {
             item.split("\n").map(item => item)
@@ -94,6 +94,7 @@ function eachJavaFile(path) {
             classInfo[item].$requestMethod = reget(classInfo[item].$desc, /@(\w+)Mapping/)
             classInfo[item].$url = classInfo.$path + classInfo[item].$path
             enrichCommonMethodInfo(text, classInfo[item])
+            enrichExceptionCode(classInfo[item])
         })
     }
     if (text.indexOf('org.apache.dubbo.config.annotation.Service') !== -1 &&
@@ -120,7 +121,30 @@ function eachJavaFile(path) {
             classInfo[item].$title = classInfo.$title + '.' + classInfo[item].$name
             classInfo[item].$package = classInfo.$package
             enrichCommonMethodInfo(implText || text, classInfo[item])
+            enrichExceptionCode(classInfo[item])
         })
+    }
+}
+
+function enrichExceptionCode(data) {
+    if (!data.$desc) {
+        return
+    }
+    data.$errorCode = {}
+    const reg = /@exceptionCode (.*)/ig
+    let nr = reg.exec(data.$desc)
+    while (nr) {
+        let str = trim(nr[1])
+        if (str) {
+            str = str.replace(/\s*:\s*/, ':').replace(/:+/g, ':')
+            for (let pair of str.split(/\s+/)) {
+                let pairs = pair.split(":")
+                if (trim(pairs[0]) && trim(pairs[1])) {
+                    data.$errorCode[trim(pairs[0])] = trim(pairs[1])
+                }
+            }
+        }
+        nr = reg.exec(data.$desc)
     }
 }
 
