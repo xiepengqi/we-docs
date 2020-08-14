@@ -131,7 +131,7 @@ export default {
       str += `|字段名称|类型|描述|
 |---|---|---|
 `
-      const ext = []
+      const ext = {}
       for (const key of Object.keys(data)) {
         if (key.startsWith('$')) {
           continue
@@ -140,10 +140,10 @@ export default {
         str += `|${key}|${item.$type}|${this.trimDesc(item.$desc)}|
 `
         if (Object.keys(item).filter(item => !item.startsWith('$')).length > 0) {
-          ext.push(item)
+          ext[item.$type] = item
         }
       }
-      for (const extElement of ext) {
+      for (const extElement of Object.values(ext)) {
         str += this.buildTable(extElement)
       }
       return str
@@ -201,7 +201,15 @@ ${result}
     white-space: pre-line;
     border:1px solid;
     font-size: 14px;
-
+    tr td:first-child {
+      width: 200px;
+    }
+    tr td:nth-child(2) {
+      width: 200px;
+    }
+    tr td:nth-child(3) {
+      width: 300px;
+    }
     thead {
       th
       {
@@ -217,7 +225,6 @@ ${result}
       border: 1px solid #cad9ea;
       height: 30px;
       padding-left: 3px;
-      min-width: 250px;
     }
   }
 </style>
