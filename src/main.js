@@ -3,10 +3,13 @@ try{
     const server = require('server');
     const { get } = server.router;
 
-    let serverInfo = { port: config.serverPort }
+    let serverInfo = {
+        port: config.serverPort,
+        public: '../union-docs-ui/dist/'
+    }
 
     server(serverInfo,[
-        get('/', ctx => 'Hello world!'),
+        get('/', ctx => ({ public: ctx.options.public })),
         get('/data', ctx => config.data)
     ]);
 
