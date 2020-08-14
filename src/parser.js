@@ -47,10 +47,10 @@ function process() {
                 throw new Error(`workDir [${workDir}] 不合法，必须在家目录下`)
             }
         })
-        // .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
-        // .then(() => {
-        //     return initWorkPj()
-        // })
+        .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
+        .then(() => {
+            return initWorkPj()
+        })
         .then(() => e(`find ${workDir} -name '*.java'`))
         .then((item)=> {
             item.split("\n").map(item => item)
@@ -341,10 +341,12 @@ function getFieldDesc(text, fieldName) {
 function initWorkPj(){
     return e(`cd ${sourceDir}; ls`)
         .then(stdout => {
-            return Promise.all(stdout.split("\n").filter(item => item).map(item =>{
-                let path = `${sourceDir}/${item}`
-                return e(`cd ${path}; pwd; git remote -v | head -1; git status | head -1`)
-            }))
+            return Promise.all(stdout.split("\n").filter(item => item)
+                .filter(item => new RegExp(config.targetReg).test(item))
+                .map(item =>{
+                    let path = `${sourceDir}/${item}`
+                    return e(`cd ${path}; pwd; git remote -v | head -1; git status | head -1`)
+                }))
         })
         .then(results => {
             let paths = []
