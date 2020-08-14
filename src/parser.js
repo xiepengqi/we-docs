@@ -144,11 +144,14 @@ function enrichCommonMethodInfo(text, info) {
 
     info.$params = {}
     let paramsStr = r[3].replace(/@[^\(\)\s]+(\([^\(\)]*\))?/g, '')
-    reg = new RegExp('\\s*([A-Z][a-zA-Z_0-9<>,\\s]+[^\\s,])\\s+([^\\s,]+)\\s*,?', 'g')
+        .replace(/(<.*?>)/g, word => {
+            return word.replace(/,/g, '@')
+        })
+    reg = new RegExp('\\s*([A-Z][a-zA-Z_0-9<>@\\s]+[^\\s,])\\s+([^\\s,]+)\\s*,?', 'g')
     let nr = reg.exec(paramsStr)
     while (nr) {
         let x = {
-            $type: nr[1]
+            $type: nr[1].replace(/@/g, ',')
         }
         info.$params[nr[2]] = x
         enrichDomainInfo(x, getFullClass(x.$type.replace(/<.*>/g, ''), text))
