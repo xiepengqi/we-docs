@@ -47,10 +47,10 @@ function process() {
                 throw new Error(`workDir [${workDir}] 不合法，必须在家目录下`)
             }
         })
-        .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
-        .then(() => {
-            return initWorkPj()
-        })
+        // .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
+        // .then(() => {
+        //     return initWorkPj()
+        // })
         .then(() => e(`find ${workDir} -name '*.java'`))
         .then((item)=> {
             item.split("\n").map(item => item)
@@ -164,7 +164,7 @@ function enrichCommonMethodInfo(text, info) {
     info.$result = {
         $type: r[2]
     }
-    enrichDomainInfo(info.$result, getFullClass(info.$result.$type.replace(/<.*>/g, ''), text))
+    enrichDomainInfo(info.$result, getFullClass(info.$result.$type.replace(/<.*>/g, ''), text), text)
 
     info.$params = {}
     let paramsStr = r[3].replace(/@[^\(\)\s]+(\([^\(\)]*\))?/g, '')
@@ -178,13 +178,13 @@ function enrichCommonMethodInfo(text, info) {
             $type: nr[1].replace(/@/g, ',')
         }
         info.$params[nr[2]] = x
-        enrichDomainInfo(x, getFullClass(x.$type.replace(/<.*>/g, ''), text))
+        enrichDomainInfo(x, getFullClass(x.$type.replace(/<.*>/g, ''), text), text)
 
         nr = reg.exec(paramsStr)
     }
 }
 
-function enrichDomainInfo(result, fullClass) {
+function enrichDomainInfo(result, fullClass, allText) {
     let path = fullClass.map(item => pathMap[item]).filter(item => item)[0]
 
     let text
@@ -210,13 +210,11 @@ function enrichDomainInfo(result, fullClass) {
     let r = reg.exec(text)
     while (r) {
         result[r[2]] = {
-            $type: r[1].match(/(<[A-Z]>|^[A-Z]$)/) ? r[1].replace(/(<[A-Z]>|^[A-Z]$)/, (trim(reget(result.$type, /[^<>]+<(.+)>/)) || "Object")) : r[1],
+            $type: getRealType(r[1], result.$type),
             $desc: getFieldDesc(text, r[2])
         }
-
         enrichDomainInfo(result[r[2]],
-            getFullClass(result[r[2]].$type.replace(/<.*>/g, '')),
-            text)
+            getFullClass(result[r[2]].$type.replace(/<.*>/g, ''), allText+'\n'+text), allText+'\n'+text)
         r = reg.exec(text)
     }
 
@@ -224,10 +222,21 @@ function enrichDomainInfo(result, fullClass) {
     if (implClass) {
         let temp = result.$type
         result.$type = implClass
-        enrichDomainInfo(result, getFullClass(implClass.replace(/<.*>/g, ''), text))
+        enrichDomainInfo(result, getFullClass(implClass.replace(/<.*>/g, ''), allText+'\n'+text), allText+'\n'+text)
         result.$type = temp
     }
     return result
+}
+
+function getRealType(fieldType, classType){
+    if (fieldType.match(/<[A-Z]>/)) {
+        return fieldType.replace(/<[A-Z]>/, `<${(trim(reget(classType, /[^<>]+<(.+)>/)) || "Object")}>`)
+    }
+    if (fieldType.match(/^[A-Z]$/)) {
+        return fieldType.replace(/^[A-Z]$/, `${(trim(reget(classType, /[^<>]+<(.+)>/)) || "Object")}`)
+    }
+
+    return fieldType
 }
 
 function getHttpMethods(text) {
@@ -332,21 +341,27 @@ function getImpl(text) {
 }
 
 function getFullClass(className, text) {
-    let fullClass = [reget(text, new RegExp(`import\\s+(.+${className});`))].filter(item => item)
+    let fullClass = [reget(text, new RegExp(`\\s*import\\s+(\\S+\\.${className})\\s*;`))].filter(item => item)
     if (fullClass.length < 1) {
-        let reg = /import\s+(.+)\.\*;/g
-
+        let reg = /\s*import\s+(\S+)\.\*\s*;/g
         let r = reg.exec(text)
         while (r) {
             fullClass.push(`${r[1]}.${className}`)
             r = reg.exec(text)
+        }
+
+        let regPackage = /\s*package\s+(\S+)\s*;/g
+        let r1 = regPackage.exec(text)
+        while (r1) {
+            fullClass.push(`${r1[1]}.${className}`)
+            r1 = regPackage.exec(text)
         }
     }
     return fullClass.filter(item => item)
 }
 
 function getPackage(text) {
-    return reget(text, new RegExp(`package\\s+(.+);`))
+    return reget(text, /\s*package\s+(.+);/)
 }
 
 function getClassDesc(text, className) {
