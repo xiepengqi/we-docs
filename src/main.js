@@ -19,4 +19,5 @@ try{
     require("./parser")
 }catch (e) {
     console.log(JSON.stringify(e))
+    throw e
 }
