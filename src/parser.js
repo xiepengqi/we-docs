@@ -47,10 +47,10 @@ function process() {
                 throw new Error(`workDir [${workDir}] 不合法，必须在家目录下`)
             }
         })
-        .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
-        .then(() => {
-            return initWorkPj()
-        })
+        // .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
+        // .then(() => {
+        //     return initWorkPj()
+        // })
         .then(() => e(`find ${workDir} -name '*.java'`))
         .then((item)=> {
             item.split("\n").map(item => item)
@@ -185,7 +185,7 @@ function enrichCommonMethodInfo(text, info) {
 }
 
 function enrichDomainInfo(result, fullClass) {
-    let path = pathMap[fullClass] || ''
+    let path = fullClass.map(item => pathMap[item]).filter(item => item)[0]
 
     let text
     if (path) {
@@ -332,7 +332,17 @@ function getImpl(text) {
 }
 
 function getFullClass(className, text) {
-    return  reget(text, new RegExp(`import\\s+(.+${className});`)) || className
+    let fullClass = [reget(text, new RegExp(`import\\s+(.+${className});`))].filter(item => item)
+    if (fullClass.length < 1) {
+        let reg = /import\s+(.+)\.\*;/g
+
+        let r = reg.exec(text)
+        while (r) {
+            fullClass.push(`${r[1]}.${className}`)
+            r = reg.exec(text)
+        }
+    }
+    return fullClass.filter(item => item)
 }
 
 function getPackage(text) {
