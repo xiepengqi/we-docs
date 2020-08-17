@@ -170,7 +170,7 @@ function enrichCommonMethodInfo(text, info) {
     let paramsStr = r[3].replace(/@[^\(\)\s]+(\([^\(\)]*\))?/g, '')
         .replace(/(<.*?>)/g, word => {
             return word.replace(/,/g, '@')
-        })
+        }).replace(/(\w)\s*\.\.\./, '$1[]')
     reg = new RegExp('\\s*([A-Z][a-zA-Z_0-9<>@\\s]+[^\\s,])\\s+([^\\s,]+)\\s*,?', 'g')
     let nr = reg.exec(paramsStr)
     while (nr) {
