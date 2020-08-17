@@ -1,5 +1,5 @@
 try{
-    const config = require("./config")
+    const config = require("../config")
     const server = require('server');
     const { get } = server.router;
 

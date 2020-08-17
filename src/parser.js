@@ -1,5 +1,5 @@
 let fs = require('fs')
-const config = require("./config")
+const config = require("../config")
 let exec = require('child_process').exec;
 
 let homeDir
