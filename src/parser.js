@@ -131,7 +131,7 @@ function enrichExceptionCode(data) {
         return
     }
     data.$errorCode = {}
-    const reg = /@exceptionCode (.*)/ig
+    const reg = /@(?:exceptionCode|exception) (.*)/ig
     let nr = reg.exec(data.$desc)
     while (nr) {
         let str = trim(nr[1])
