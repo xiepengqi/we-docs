@@ -332,7 +332,7 @@ function register(path, module, className, methodName, info) {
 }
 
 function getImpl(text) {
-    let interfaceName = reget(text, /public\s+class\s+\S+\s+(?:implements|extends)\s+(\S+)/)
+    let interfaceName = reget(text, /public\s+class\s+\S+\s+(?:implements|extends)\s+(\S+)\s*\{/)
 
     return Object.values({
         implClass: interfaceName,
@@ -381,10 +381,10 @@ function getMethodDesc(text, methodName) {
 
 function getFieldDesc(text, fieldName) {
     text = text.replace(/public\s+(?:class|interface|abstract class)[^\{]+{/, ";")
-    let reg = new RegExp('[\\{\\};]\\s*\n\\s*([/@][^;]+)(?:private|public|protected).*'+fieldName+'\\s*;')
+    let reg = new RegExp('[\\{\\};].*\n\\s*([/@][^;]+)(?:private|public|protected)\\s+\\S+\\s+'+fieldName+'\\s*;([^\n]*)')
 
     let r = reg.exec(text)
-    return r ? trim(r[1]).replace(/\n\s*/g, '\n'): ""
+    return r ? trim(trim(r[1]) + "\n" + trim(r[2])).replace(/\n\s*/g, '\n'): ""
 }
 
 function initWorkPj(){
