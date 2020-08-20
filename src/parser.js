@@ -4,7 +4,6 @@ let exec = require('child_process').exec;
 
 let homeDir
 let sourceDir = trim(config.sourceDir).replace(/\/+/g, '/').replace(/\/$/, '')
-let workDir = trim(config.workDir).replace(/\/+/g, '/').replace(/\/$/, '')
 
 let pathMap = {}
 let repoMap = {}
@@ -40,21 +39,44 @@ function process() {
             if (sourceDir !== item) {
                 throw new Error(`sourceDir [${sourceDir}] 不合法`)
             }
+            return e(`cd ${sourceDir}; ls`)
         })
-        .then(() => {
-            // 初始化工作目录
-            if (!workDir.startsWith(homeDir) || workDir === homeDir) {
-                throw new Error(`workDir [${workDir}] 不合法，必须在家目录下`)
+        .then(stdout => {
+            return Promise.all(stdout.split("\n").filter(item => item)
+                .filter(item => new RegExp(config.targetReg).test(item))
+                .map(item =>{
+                    let path = `${sourceDir}/${item}`
+                    return e(`cd ${path}; pwd; git remote -v | head -1; git status | head -1`)
+                }))
+        })
+        .then(results => {
+            let paths = []
+            for (let result of results) {
+                let strs = result.split("\n").filter(item => item)
+                if (strs.length > 1 && strs[1].indexOf(config.gitRemoteInclude) !== -1) {
+                    paths.push(strs[0])
+                    let workPath = strs[0]
+                    if (!repoMap[workPath]) {
+                        repoMap[workPath] = {}
+                    }
+                    repoMap[workPath].$branch = strs[2]
+                    repoMap[workPath].$repo = strs[1]
+                }
             }
+            return Promise.all(paths.map(item => {
+                return e(`find ${item} -name '*.java'`)
+            }))
         })
-        .then(() => e(`mkdir ${workDir}; rm -rf ${workDir}/* `))
-        .then(() => {
-            return initWorkPj()
-        })
-        .then(() => e(`find ${workDir} -name '*.java'`))
-        .then((item)=> {
-            item.split("\n").map(item => item)
-                .filter(item => item && item.match(/\.java$/))
+        .then(items => {
+            let results = []
+            for (let item of items) {
+                item.split("\n").forEach(i => {
+                    if (i) {
+                        results.push(i)
+                    }
+                })
+            }
+            results.filter(item => item && item.match(/\.java$/))
                 .map(item => {
                     item = trim(item)
                     let [module, className] = parsePath(item)
@@ -131,7 +153,7 @@ function enrichExceptionCode(data) {
         return
     }
     data.$errorCode = {}
-    const reg = /@(?:exceptionCode|exception) (.*)/ig
+    const reg = /@(?:exception|errorCode)\S* (.*)/ig
     let nr = reg.exec(data.$desc)
     while (nr) {
         let str = trim(nr[1])
@@ -151,7 +173,7 @@ function enrichExceptionCode(data) {
 function getCnLabel(str) {
     str = str + '\n'
     return reget(str, /"(.*?[\u4e00-\u9fa5].*?)"/) ||
-        reget(str, /@Description([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/) ||
+        reget(str, /@Description([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/i) ||
         reget(str, /\/([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/) ||
         reget(str, /\*([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/)
 }
@@ -268,7 +290,7 @@ function parsePath(path) {
     if (!path) {
         return ['', '']
     }
-    let strs = path.replace(workDir, '').split('/').filter(item => item)
+    let strs = path.replace(sourceDir, '').split('/').filter(item => item)
     return Object.values({
         module: reget(path, /.*\/([^/]+)\/src\/main\/java.*/),
         className: strs[strs.length - 1].replace('.java', '')
@@ -385,51 +407,6 @@ function getFieldDesc(text, fieldName) {
 
     let r = reg.exec(text)
     return r ? trim(trim(r[1]) + "\n" + trim(r[2])).replace(/\n\s*/g, '\n'): ""
-}
-
-function initWorkPj(){
-    return e(`cd ${sourceDir}; ls`)
-        .then(stdout => {
-            return Promise.all(stdout.split("\n").filter(item => item)
-                .filter(item => new RegExp(config.targetReg).test(item))
-                .map(item =>{
-                    let path = `${sourceDir}/${item}`
-                    return e(`cd ${path}; pwd; git remote -v | head -1; git status | head -1`)
-                }))
-        })
-        .then(results => {
-            let paths = []
-            for (let result of results) {
-                let strs = result.split("\n").filter(item => item)
-                if (strs.length > 1 && strs[1].indexOf(config.gitRemoteInclude) !== -1) {
-                    paths.push(strs[0])
-                    let workPath = strs[0].replace(sourceDir, workDir)
-                    if (!repoMap[workPath]) {
-                        repoMap[workPath] = {}
-                    }
-                    repoMap[workPath].$branch = strs[2]
-                    repoMap[workPath].$repo = strs[1]
-                }
-            }
-            return Promise.all(paths.map(item => {
-                return e(`find ${item} -name '*.java'`)
-            }))
-        })
-        .then(items => {
-            let results = []
-            for (let item of items) {
-                item.split("\n").forEach(i => {
-                    if (i) {
-                        results.push(i)
-                    }
-                })
-            }
-            return queue(results.map(item => {
-                let target = item.replace(sourceDir, workDir)
-                let targetDir = target.replace(/[^/]+\.java/, '');
-                return () => e(`mkdir -p ${targetDir}; cp ${item} ${target}`)
-            }))
-        })
 }
 
 ////////////////////////////////////////////////////////////////////////////////

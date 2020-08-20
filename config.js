@@ -1,5 +1,4 @@
 module.exports = {
-    workDir: "/Users/xiepengqi//temp/projects///",
     sourceDir: "/Users/xiepengqi/IdeaProjects",
     targetReg: "gcps-",
     serverPort: 8080,
