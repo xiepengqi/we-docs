@@ -199,7 +199,7 @@ ${params}
 ${result}
 ${errorCode}
 `
-      console.log(`\n\n\n${mdStr}`)
+      console.log(mdStr)
       return mdStr
     }
   }
