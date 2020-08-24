@@ -190,7 +190,7 @@ ${json.$profile || ''}
       const params = !json.$params ? '' : this.buildTable(json.$params, 'Params', {})
       const result = !json.$result ? '' : this.buildTable(json.$result, 'Result', {})
       const errorCode = this.buildErrorCode(json.$errorCode)
-      return `
+      let mdStr = `
 ### ${json.$title}
 ${httpInfo}
 ${desc}
@@ -199,6 +199,8 @@ ${params}
 ${result}
 ${errorCode}
 `
+      console.log(`\n\n\n${mdStr}`)
+      return mdStr
     }
   }
 }
