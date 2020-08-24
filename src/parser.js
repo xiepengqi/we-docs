@@ -64,7 +64,7 @@ function process() {
                 }
             }
             return Promise.all(paths.map(item => {
-                return e(`find ${item} -name '*.java'`)
+                return e(`find ${item} -name '*.java' ! -path '*/node_modules/*'`)
             }))
         })
         .then(items => {
