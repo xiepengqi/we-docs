@@ -275,7 +275,7 @@ function getRealType(fieldType, classType){
 }
 
 function getHttpMethods(text) {
-    let reg = /@.+Mapping\([^;]+?public\s+\S+\s+([\w\d]+)\s*\(/g
+    let reg = /@\w+?Mapping\([^;]+?public\s+\S+\s+([\w\d]+)\s*\(/g
 
     let result = []
     let r = reg.exec(text)
