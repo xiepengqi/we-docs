@@ -275,7 +275,7 @@ function getRealType(fieldType, classType){
 }
 
 function getHttpMethods(text) {
-    let reg = /[\{;][^\{;]+@.+Mapping\([^\{;]+?public\s+\S+\s+([\w\d]+)\s*\(/g
+    let reg = /@.+Mapping\([^;]+?public\s+\S+\s+([\w\d]+)\s*\(/g
 
     let result = []
     let r = reg.exec(text)
@@ -287,7 +287,7 @@ function getHttpMethods(text) {
     return result
 }
 function getDubboMethods(text) {
-    let reg = /[\{;][^\{;]+@Override[^\{;]+?public\s+\S+\s+([\w\d]+)\s*\(/g
+    let reg = /@Override[^;]+?public\s+\S+\s+([\w\d]+)\s*\(/g
 
     let result = []
     let r = reg.exec(text)
