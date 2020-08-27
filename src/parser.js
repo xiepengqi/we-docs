@@ -89,7 +89,7 @@ function process() {
 }
 
 function eachJavaFile(path) {
-    let text = String(fs.readFileSync(path))
+    let text = prepareJavaText(String(fs.readFileSync(path)))
     let [module, className] = parsePath(path)
 
     if (text.match(/(?:@RestController|@Controller)/)) {
@@ -126,7 +126,7 @@ function eachJavaFile(path) {
         let classInfo = config.data[module][className]
         let [implClass, implPath] = getImpl(text)
 
-        let implText = implPath ? String(fs.readFileSync(implPath)):""
+        let implText = implPath ? prepareJavaText(String(fs.readFileSync(implPath))):""
 
 
         classInfo.$desc = getClassDesc(implText, implClass) ||  getClassDesc(text, className)
@@ -211,7 +211,10 @@ function enrichDomainInfo(result, fullClass, allText) {
 
     let text
     if (path) {
-        text = String(fs.readFileSync(path));
+        text = prepareJavaText(String(fs.readFileSync(path)))
+        if (allText.indexOf(text) !== -1) {
+            return;
+        }
     } else {
         if (result.$type.indexOf('<') !== -1) {
             text = `
@@ -227,8 +230,8 @@ function enrichDomainInfo(result, fullClass, allText) {
     if (! result.$desc) {
         result.$desc = getClassDesc(text, className)
     }
-    text = text.replace(/return.*;/g, '')
-    let reg = /\n\s+(?:private|public|protected)?\s+([^\n\-\(\)\=\+;\*@]+)\s+([a-zA-Z][a-zA-Z0-9_]*)\s*;/g
+
+    let reg = /\n\s+(?:private|public|protected)?\s+([^\s\n\-\(\)\=\+;\*@]+)\s+([a-zA-Z][a-zA-Z0-9_]*)\s*[;=]/g
     let r = reg.exec(text)
     while (r) {
         result[r[2]] = {
@@ -248,6 +251,16 @@ function enrichDomainInfo(result, fullClass, allText) {
         result.$type = temp
     }
     return result
+}
+
+function prepareJavaText(text) {
+    return text.replace(/return[^\n]*;/g, '')
+        .replace(/\s*,\s*/g, ',')
+        .replace(/<\s*/g, '<')
+        .replace(/\s*>/g, '>')
+        .replace(/\n\s*\/\*[^\n]*/g, x => x.replace(/;/g, ''))
+        .replace(/\n\s*\*[^\n]*/g, x => x.replace(/;/g, ''))
+        .replace(/\n\s*@[^\n]*/g, x => x.replace(/;/g, ''))
 }
 
 function getRealType(fieldType, classType){
@@ -402,11 +415,12 @@ function getMethodDesc(text, methodName) {
 }
 
 function getFieldDesc(text, fieldName) {
-    text = text.replace(/public\s+(?:class|interface|abstract class)[^\{]+{/, ";")
-    let reg = new RegExp('[\\{\\};].*\n\\s*([/@][^;]+)(?:private|public|protected)\\s+\\S+\\s+'+fieldName+'\\s*;([^\n]*)')
+    text = text.replace(/public\s+(?:class|interface|abstract class)[^{]+{/, ";")
+    let reg = new RegExp('[\\{\\};].*\n\\s*([/@][^;]+)(?:private|public|protected)\\s+\\S+\\s+'+fieldName+'\\s*[;=]([^\n]*)')
 
     let r = reg.exec(text)
-    return r ? trim(trim(r[1]) + "\n" + trim(r[2])).replace(/\n\s*/g, '\n'): ""
+    return r ? trim(trim(r[1]) + "\n" + trim(r[2]).replace(/(.*);/, 'default: $1'))
+        .replace(/\n\s*/g, '\n'): ""
 }
 
 ////////////////////////////////////////////////////////////////////////////////
