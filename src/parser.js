@@ -172,10 +172,10 @@ function enrichExceptionCode(data) {
 
 function getCnLabel(str) {
     str = str + '\n'
-    return reget(str, /"(.*?[\u4e00-\u9fa5].*?)"/) ||
-        reget(str, /@Description([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/i) ||
-        reget(str, /\/([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/) ||
-        reget(str, /\*([^:：,@\*\n.，\/]*?[\u4e00-\u9fa5][^:：,@\*\n.，\/]*?)\n/)
+    return reget(str, /"([^"]*?[\u4e00-\u9fa5][^"]*)"/) ||
+        reget(str, /@Description([^:：@\*\n\/]*?[\u4e00-\u9fa5][^:：@\*\n\/]*)/i) ||
+        reget(str, /\/([^:：@\*\n\/]*?[\u4e00-\u9fa5][^:：@\*\n\/]*)/) ||
+        reget(str, /\*([^:：@\*\n\/]*?[\u4e00-\u9fa5][^:：@\*\n\/]*)/)
 }
 
 function enrichCommonMethodInfo(text, info) {
@@ -189,17 +189,22 @@ function enrichCommonMethodInfo(text, info) {
     enrichDomainInfo(info.$result, getFullClass(info.$result.$type.replace(/<.*>/g, ''), text), text)
 
     info.$params = {}
-    let paramsStr = r[3].replace(/@[^\(\)\s]+(\([^\(\)]*\))?/g, '')
+    let paramsStr = (r[3] + ",")
+        .replace(/\([^()]*\)/g, word => {
+            return word.replace(/,/g, '#@#').replace(/\s+/g, '')
+        })
         .replace(/(<.*?>)/g, word => {
             return word.replace(/,/g, '@')
-        }).replace(/(\w)\s*\.\.\./g, '$1[]')
-    reg = new RegExp('\\s*([A-Z][a-zA-Z_0-9<>\\[\\]@\\s]+[^\\s,])\\s+([^\\s,]+)\\s*,?', 'g')
+        })
+        .replace(/(\w)\s*\.\.\./g, '$1[]')
+    reg = new RegExp('([^,]+\\s+)?([A-Z][a-zA-Z_0-9<>\\[\\]@\\s]+[^\\s,])\\s+([^\\s,]+)\\s*,?', 'g')
     let nr = reg.exec(paramsStr)
     while (nr) {
         let x = {
-            $type: nr[1].replace(/@/g, ',')
+            $desc: trim(nr[1]).replace('#@#', ',').replace('@', '\n@').trim(),
+            $type: nr[2].replace(/@/g, ',')
         }
-        info.$params[nr[2]] = x
+        info.$params[nr[3]] = x
         enrichDomainInfo(x, getFullClass(x.$type.replace(/<.*>/g, ''), text), text)
 
         nr = reg.exec(paramsStr)
@@ -227,9 +232,7 @@ function enrichDomainInfo(result, fullClass, allText) {
 
     let [module, className] = parsePath(path)
 
-    if (! result.$desc) {
-        result.$desc = getClassDesc(text, className)
-    }
+    result.$desc = result.$desc + '\n' + getClassDesc(text, className)
 
     let reg = /\n\s+(?:private|public|protected)?\s+([^\s\n\-\(\)\=\+;\*@]+)\s+([a-zA-Z][a-zA-Z0-9_]*)\s*[;=]/g
     let r = reg.exec(text)
@@ -416,10 +419,10 @@ function getMethodDesc(text, methodName) {
 
 function getFieldDesc(text, fieldName) {
     text = text.replace(/public\s+(?:class|interface|abstract class)[^{]+{/, ";")
-    let reg = new RegExp('[\\{\\};].*\n\\s*([/@][^;]+)(?:private|public|protected)\\s+\\S+\\s+'+fieldName+'\\s*[;=]([^\n]*)')
+    let reg = new RegExp('[\\{\\};].*\n\\s*([/@][^;]+)?(?:private|public|protected)\\s+\\S+\\s+'+fieldName+'\\s*[;=]([^\n]*)')
 
     let r = reg.exec(text)
-    return r ? trim(trim(r[1]) + "\n" + trim(r[2]).replace(/(.*);/, 'default: $1'))
+    return r ? trim(trim(r[1]) + "\n" + trim(r[2]).replace(/(.*);/, '默认: $1 \n'))
         .replace(/\n\s*/g, '\n'): ""
 }
 
