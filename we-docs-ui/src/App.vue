@@ -50,6 +50,7 @@ export default {
     this.$http.get('/data').then(resp => {
       this.menus = resp.data
       this.$store.state.content = this.menus
+      this.searchStr = location.href.split('?')[1]
     })
     marked.setOptions({
       renderer: new marked.Renderer(),
