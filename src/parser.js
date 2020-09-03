@@ -20,11 +20,12 @@ function doProcess(){
         console.log("begin load data " + new Date())
         process().then(() => {
             console.log("done " + ((Date.now() - time)/1000) + 's')
+            setTimeout(doProcess, (config.refreshSec || 60) * 1000)
         })
     } catch (e) {
         console.log(JSON.stringify(e))
+        setTimeout(doProcess, (config.refreshSec || 60) * 1000)
     }
-    setTimeout(doProcess, (config.refreshSec || 60) * 1000)
 }
 
 function process() {
