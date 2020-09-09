@@ -15,17 +15,16 @@ Object.keys(config.data).filter(item => !item.startsWith("$")).forEach(item => {
 doProcess()
 
 function doProcess(){
-    try {
-        let time = Date.now()
-        console.log("begin load data " + new Date())
-        process().then(() => {
-            console.log("done " + ((Date.now() - time)/1000) + 's')
-            setTimeout(doProcess, (config.refreshSec || 60) * 1000)
-        })
-    } catch (e) {
-        console.log(JSON.stringify(e))
+    let time = Date.now()
+    console.log("begin load data " + new Date())
+    process().then(() => {
+        console.log("done " + ((Date.now() - time)/1000) + 's')
         setTimeout(doProcess, (config.refreshSec || 60) * 1000)
-    }
+    }).catch(e => {
+        console.error(e)
+        console.log("done " + ((Date.now() - time)/1000) + 's')
+        setTimeout(doProcess, (config.refreshSec || 60) * 1000)
+    })
 }
 
 function process() {
