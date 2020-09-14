@@ -370,7 +370,7 @@ function register(path, module, className, methodName, info) {
 }
 
 function getImpl(text) {
-    let interfaceName = reget(text, /public\s+class\s+\S+\s+(?:implements|extends)\s+(\S+)\s*\{/)
+    let interfaceName = reget(text, /public\s+class\s+\S+\s+(?:implements|extends)\s+(\S+)\s*/)
 
     return Object.values({
         implClass: interfaceName,
