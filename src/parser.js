@@ -92,60 +92,94 @@ function eachJavaFile(path) {
     let text = prepareJavaText(String(fs.readFileSync(path)))
     let [module, className] = parsePath(path)
 
-    if (text.match(/(?:@RestController|@Controller)/)) {
-        register(path, module, className)
-        let classInfo = config.data[module][className]
-        classInfo.$desc = getClassDesc(text, className)
-        classInfo.$package = getPackage(text)
-        classInfo.$label = getCnLabel(classInfo.$desc) || classInfo.$label
-        classInfo.$profile = reget(text, /(public\s+(?:class|interface|abstract class)[^\{]+){/)
+    module = module.replace(/-api$/, '')
+        .replace(/-rt$/, '')
 
-        classInfo.$path = reget(classInfo.$desc, /@RequestMapping\(\"(.*)\"\)/)
-        if (classInfo.$path) {
-            classInfo.$path = "/" + classInfo.$path.split("/").filter(item => item).join("/")
+    processHttp(text, path, module, className);
+    processRpc(text, path, module, className);
+    processErrorCode(text, path, module, className);
+}
+
+function processErrorCode(text, path, module, className) {
+    if (!text.match(/public enum\s+/)) {
+        return;
+    }
+
+    register(path, module, "enum", className)
+
+    let classInfo = config.data[module].enum
+    classInfo.$label = "枚举类"
+
+    let item = config.data[module].enum[className]
+
+    item.$desc = getClassDesc(text, className)
+    item.$package = getPackage(text)
+    item.$label = getCnLabel(item.$desc) || item.$label
+    item.$profile = reget(text, /(public\s+enum\s+[^\{]+){/) + "\n\n"
+        + reget(text, /public enum\s+[^{]+\{([^;]+;)/)
+            .replace(/\n\s*/g, '\n')
+}
+
+function processHttp(text, path, module, className){
+    if (!text.match(/(?:@RestController|@Controller)/)) {
+        return;
+    }
+
+    register(path, module, className)
+    let classInfo = config.data[module][className]
+    classInfo.$desc = getClassDesc(text, className)
+    classInfo.$package = getPackage(text)
+    classInfo.$label = getCnLabel(classInfo.$desc) || classInfo.$label
+    classInfo.$profile = reget(text, /(public\s+(?:class|interface|abstract class)[^\{]+){/)
+
+    classInfo.$path = reget(classInfo.$desc, /@RequestMapping\(\"(.*)\"\)/)
+    if (classInfo.$path) {
+        classInfo.$path = "/" + classInfo.$path.split("/").filter(item => item).join("/")
+    }
+    getHttpMethods(text).forEach(item => {
+        register(path, module, className, item)
+        classInfo[item].$desc = getMethodDesc(text, item)
+        classInfo[item].$label = getCnLabel(classInfo[item].$desc) || classInfo[item].$label
+        classInfo[item].$package = classInfo.$package
+        classInfo[item].$path = reget(classInfo[item].$desc, /@\w+Mapping\(\"(.*)\"\)/)
+        if (classInfo[item].$path) {
+            classInfo[item].$path = "/" + classInfo[item].$path.split("/").filter(item => item).join("/")
         }
-        getHttpMethods(text).forEach(item => {
-            register(path, module, className, item)
-            classInfo[item].$desc = getMethodDesc(text, item)
-            classInfo[item].$label = getCnLabel(classInfo[item].$desc) || classInfo[item].$label
-            classInfo[item].$package = classInfo.$package
-            classInfo[item].$path = reget(classInfo[item].$desc, /@\w+Mapping\(\"(.*)\"\)/)
-            if (classInfo[item].$path) {
-                classInfo[item].$path = "/" + classInfo[item].$path.split("/").filter(item => item).join("/")
-            }
-            classInfo[item].$requestMethod = reget(classInfo[item].$desc, /@(\w+)Mapping/)
-            classInfo[item].$url = classInfo.$path + classInfo[item].$path
-            enrichCommonMethodInfo(text, classInfo[item])
-            enrichExceptionCode(classInfo[item])
-        })
+        classInfo[item].$requestMethod = reget(classInfo[item].$desc, /@(\w+)Mapping/)
+        classInfo[item].$url = classInfo.$path + classInfo[item].$path
+        enrichCommonMethodInfo(text, classInfo[item])
+        enrichExceptionCode(classInfo[item])
+    })
+}
+
+function processRpc(text, path, module, className){
+    if (!(text.indexOf('org.apache.dubbo.config.annotation.Service') !== -1 &&
+        text.indexOf('@Service') !== -1)) {
+        return;
     }
-    if (text.indexOf('org.apache.dubbo.config.annotation.Service') !== -1 &&
-        text.indexOf('@Service') !== -1) {
-        register(path, module, className)
+    register(path, module, className)
 
-        let classInfo = config.data[module][className]
-        let [implClass, implPath] = getImpl(text)
+    let classInfo = config.data[module][className]
+    let [implClass, implPath] = getImpl(text)
 
-        let implText = implPath ? prepareJavaText(String(fs.readFileSync(implPath))):""
+    let implText = implPath ? prepareJavaText(String(fs.readFileSync(implPath))):""
 
+    classInfo.$desc = getClassDesc(implText, implClass) ||  getClassDesc(text, className)
+    classInfo.$label = getCnLabel(classInfo.$desc) || implClass || className
+    classInfo.$title = module + '/' + (implClass || className)
+    classInfo.$package = getPackage(implText || text)
+    classInfo.$profile = reget(implText || text, /(public\s+(?:class|interface|abstract class)[^\{]+){/)
 
-        classInfo.$desc = getClassDesc(implText, implClass) ||  getClassDesc(text, className)
-        classInfo.$label = getCnLabel(classInfo.$desc) || implClass || className
-        classInfo.$title = module + '/' + (implClass || className)
-        classInfo.$package = getPackage(implText || text)
-        classInfo.$profile = reget(implText || text, /(public\s+(?:class|interface|abstract class)[^\{]+){/)
+    getDubboMethods(text).forEach(item => {
+        register(path, module, className, item)
 
-        getDubboMethods(text).forEach(item => {
-            register(path, module, className, item)
-
-            classInfo[item].$desc = getMethodDesc(implText, item) || getMethodDesc(text, item)
-            classInfo[item].$label = getCnLabel(classInfo[item].$desc) || classInfo[item].$label
-            classInfo[item].$title = classInfo.$title + '.' + classInfo[item].$name
-            classInfo[item].$package = classInfo.$package
-            enrichCommonMethodInfo(implText || text, classInfo[item])
-            enrichExceptionCode(classInfo[item])
-        })
-    }
+        classInfo[item].$desc = getMethodDesc(implText, item) || getMethodDesc(text, item)
+        classInfo[item].$label = getCnLabel(classInfo[item].$desc) || classInfo[item].$label
+        classInfo[item].$title = classInfo.$title + '.' + classInfo[item].$name
+        classInfo[item].$package = classInfo.$package
+        enrichCommonMethodInfo(implText || text, classInfo[item])
+        enrichExceptionCode(classInfo[item])
+    })
 }
 
 function enrichExceptionCode(data) {
@@ -403,7 +437,7 @@ function getPackage(text) {
 }
 
 function getClassDesc(text, className) {
-    let reg = new RegExp('[;]([^;]+)public\\s+(?:class|interface|abstract class)\\s+'+className+'\\s*')
+    let reg = new RegExp('[;]([^;]+)public\\s+(?:class|enum|interface|abstract class)\\s+'+className+'\\s*')
 
     let r = reg.exec(text)
     return r ? trim(r[1]).replace(/\n\s*/g, '\n'): ""

@@ -102,7 +102,7 @@ export default {
           data[item].$hidden = false
           return
         }
-        const matchStr = this.buildMatchStr(item, data[item].$name, data[item].$label, data[item].$title)
+        const matchStr = this.buildMatchStr(item, data[item].$name, data[item].$label, data[item].$title, data[item].$profile)
         let hidden = false
         for (const k of str.split(/\s+/).filter(item => item)) {
           if (matchStr.toUpperCase().indexOf(k.toUpperCase()) === -1) {
