@@ -92,9 +92,6 @@ function eachJavaFile(path) {
     let text = prepareJavaText(String(fs.readFileSync(path)))
     let [module, className] = parsePath(path)
 
-    module = module.replace(/-api$/, '')
-        .replace(/-rt$/, '')
-
     processHttp(text, path, module, className);
     processRpc(text, path, module, className);
     processErrorCode(text, path, module, className);
@@ -342,7 +339,8 @@ function parsePath(path) {
     }
     let strs = path.replace(sourceDir, '').split('/').filter(item => item)
     return Object.values({
-        module: reget(path, /.*\/([^/]+)\/src\/main\/java.*/),
+        module: reget(path, /.*\/([^/]+)\/src\/main\/java.*/).replace(/-api$/, '')
+            .replace(/-rt$/, ''),
         className: strs[strs.length - 1].replace('.java', '')
     })
 }
