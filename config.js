@@ -7,5 +7,12 @@ module.exports = {
     data: {
         $title: 'GCPS-DOCS',
         $desc: 'gcps we docs'
+    },
+    modulePath: {
+        'gcps-portal-manager': 'biz-manager',
+        'gcps-portal-merchant': 'biz-merchant',
+        'gcps-portal-dealer': 'biz-dealer',
+        'gcps-portal-regulator': 'biz-regulator',
+        'gcps-portal-vendor': 'biz-vendor',
     }
 }

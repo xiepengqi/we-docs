@@ -143,10 +143,17 @@ function processHttp(text, path, module, className){
             classInfo[item].$path = "/" + classInfo[item].$path.split("/").filter(item => item).join("/")
         }
         classInfo[item].$requestMethod = reget(classInfo[item].$desc, /@(\w+)Mapping/)
-        classInfo[item].$url = classInfo.$path + classInfo[item].$path
+        classInfo[item].$url = getModulePath(module) + classInfo.$path + classInfo[item].$path
         enrichCommonMethodInfo(text, classInfo[item])
         enrichExceptionCode(classInfo[item])
     })
+}
+
+function getModulePath(module) {
+    if (!config.modulePath || !trim(config.modulePath[module])) {
+        return ''
+    }
+    return '/' + trim(config.modulePath[module]).split("/").filter(item => item).join("/")
 }
 
 function processRpc(text, path, module, className){
