@@ -463,7 +463,7 @@ function getFieldDesc(text, fieldName) {
 function e(cmd){
     return new Promise(resolve => {
         exec(`${cmd}`, {
-                maxBuffer: 2000 * 1024 //quick fix
+                maxBuffer: 10000 * 1024 //quick fix
             },
             function (err, stdout, stderr) {
                 resolve(trim(stdout))
