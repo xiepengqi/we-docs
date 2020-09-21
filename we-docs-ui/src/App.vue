@@ -130,8 +130,8 @@ export default {
         str = `##### - ${data.$type}
 `
       }
-      str += `|字段名称|类型|描述|
-|---|---|---|
+      str += `|字段名称|类型|是否必填|描述|
+|---|---|---|---|
 `
       const ext = {}
       for (const key of Object.keys(data)) {
@@ -139,7 +139,7 @@ export default {
           continue
         }
         const item = data[key]
-        str += `|${key}|${item.$type}|${this.trimDesc(item.$desc)}|
+        str += `|${key}|${item.$type}|${this.isRequired(item.$desc)}|${this.trimDesc(item.$desc)}|
 `
         if (Object.keys(item).filter(item => !item.startsWith('$')).length > 0) {
           ext[item.$type] = item
@@ -153,6 +153,15 @@ export default {
         record[item.$type] = item
       }
       return str
+    },
+    isRequired(str) {
+      const items = ['@NotBlank', '@NotEmpty', '@NotNull', '@NoneNull']
+      for (const item of items) {
+        if (str.indexOf(item) !== -1) {
+          return 'Y'
+        }
+      }
+      return ''
     },
     buildErrorCode(data) {
       if (!data) {
@@ -234,6 +243,9 @@ ${errorCode}
       width: 200px;
     }
     tr td:nth-child(3) {
+      width: 50px;
+    }
+    tr td:nth-child(4) {
       width: 300px;
     }
     thead {
