@@ -5,13 +5,15 @@
   "main": "index.js",
   "scripts": {
     "dev": "node ./src/main.js",
-    "start": "nohup node ./src/main.js 2>&1 &",
+    "start": "nohup node ./src/main.js we-docs 2>&1 &",
+    "stop": "node ./stop.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "server": "^1.0.29"
+    "server": "^1.0.29",
+    "xpq-js-lib": "^1.0.10"
   }
 }

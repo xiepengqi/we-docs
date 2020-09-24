@@ -1,6 +1,6 @@
 let fs = require('fs')
 const config = require("../config")
-let exec = require('child_process').exec;
+let {trim, e} = require('xpq-js-lib')
 
 let homeDir
 let sourceDir = trim(config.sourceDir).replace(/\/+/g, '/').replace(/\/$/, '')
@@ -465,27 +465,4 @@ function getFieldDesc(text, fieldName) {
         .replace(/\n\s*/g, '\n'): ""
 }
 
-////////////////////////////////////////////////////////////////////////////////
 
-function e(cmd){
-    return new Promise(resolve => {
-        exec(`${cmd}`, {
-                maxBuffer: 10000 * 1024 //quick fix
-            },
-            function (err, stdout, stderr) {
-                resolve(trim(stdout))
-            });
-    })
-}
-
-function trim(obj) {
-    return obj ? String(obj).trim():""
-}
-
-async function queue(arr) {
-    let res = []
-    for (let fn of arr) {
-        res.push(await fn());
-    }
-    return await res
-}
