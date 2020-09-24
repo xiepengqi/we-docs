@@ -103,7 +103,7 @@ export default {
           return
         }
         const matchStr = this.buildMatchStr(item, data[item].$name, data[item].$label,
-          data[item].$title, data[item].$profile, data[item].$url)
+          data[item].$title, data[item].$profile, data[item].$url, Object.keys(data[item].$deps || {}).join(','))
         let hidden = false
         for (const k of str.split(/\s+/).filter(item => item)) {
           if (matchStr.toUpperCase().indexOf(k.toUpperCase()) === -1) {
@@ -120,6 +120,28 @@ export default {
       }
 
       return str.replace(/[\/\*]+/g, '').trim().replace(/[\n]+/g, '<br>')
+    },
+    buildDeps(json) {
+      const deps = Object.values(json.$deps || {})
+      const pps = (json.$repo || {}).$properties
+      if (!(deps && pps)) {
+        return ''
+      }
+      let str = `##### Deps
+`
+
+      str += `|GroupId|ArtifactId|version|
+|---|---|---|
+`
+      for (const item of deps) {
+        let version = pps[item.version.replace(/[${}]/g, '')] || item.version
+        if (item.version === '${project.version}') {
+          version = json.$profile.replace('<version>', '').replace('</version>', '')
+        }
+        str += `|${item.groupId}|${item.artifactId}|${version}|
+`
+      }
+      return str
     },
     buildTable(data, title, record) {
       let str = ''
@@ -183,8 +205,8 @@ export default {
       const repoInfo = (json.$repo || json.$branch) ? `
 #### Git Repo
 \`\`\`
-${json.$repo ? json.$repo : ''}
-${json.$branch ? json.$branch : ''}
+${json.$repo.$repo || ''}
+${json.$repo.$branch || ''}
 \`\`\`
 ` : ''
       const httpInfo = `
@@ -194,13 +216,13 @@ ${json.$requestMethod ? `Method: ${json.$requestMethod}` : ''}
 `
       const desc = `
 \`\`\`
-${json.$desc || ''}
-${json.$profile || ''}
+${((json.$desc || '') + '\n' + (json.$profile || '')).trim()}
 \`\`\`
 `
       const params = !json.$params ? '' : this.buildTable(json.$params, 'Params', {})
       const result = !json.$result ? '' : this.buildTable(json.$result, 'Result', {})
       const errorCode = this.buildErrorCode(json.$errorCode)
+      const deps = this.buildDeps(json)
       const mdStr = `
 ### ${json.$title}
 ${httpInfo}
@@ -209,6 +231,7 @@ ${repoInfo}
 ${params}
 ${result}
 ${errorCode}
+${deps}
 `
       console.log(mdStr)
       return mdStr
@@ -243,7 +266,7 @@ ${errorCode}
       width: 200px;
     }
     tr td:nth-child(3) {
-      width: 50px;
+      width: 200px;
     }
     tr td:nth-child(4) {
       width: 300px;

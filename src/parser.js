@@ -1,6 +1,6 @@
 let fs = require('fs')
 const config = require("../config")
-let {trim, e} = require('xpq-js-lib')
+let {trim, e, reget, regEach} = require('xpq-js-lib')
 
 let homeDir
 let sourceDir = trim(config.sourceDir).replace(/\/+/g, '/').replace(/\/$/, '')
@@ -64,7 +64,7 @@ function process() {
                 }
             }
             return Promise.all(paths.map(item => {
-                return e(`find ${item} -name '*.java'`)
+                return e(`find ${item} -name '*.java' -o -name '*.xml'`)
             }))
         })
         .then(items => {
@@ -76,12 +76,14 @@ function process() {
                     }
                 })
             }
-            results.filter(item => item && item.match(/\.java$/))
+            results.filter(item => item)
                 .map(item => {
                     item = trim(item)
                     let [module, className] = parsePath(item)
-                    pathMap[reget(item, new RegExp('/src/main/java/(.+)\.java')).replace(/\//g, '.')] = item
-                    pathMap[className] = item
+                    if (item.endsWith('.java')) {
+                        pathMap[reget(item, new RegExp('/src/main/java/(.+)\.java')).replace(/\//g, '.')] = item
+                        pathMap[className] = item
+                    }
                     return item
                 })
                 .forEach(item => eachJavaFile(item))
@@ -92,9 +94,46 @@ function eachJavaFile(path) {
     let text = prepareJavaText(String(fs.readFileSync(path)))
     let [module, className] = parsePath(path)
 
-    processHttp(text, path, module, className);
-    processRpc(text, path, module, className);
-    processErrorCode(text, path, module, className);
+    if (path.endsWith('.java')) {
+        processHttp(text, path, module, className);
+        processRpc(text, path, module, className);
+        processErrorCode(text, path, module, className);
+    }
+    if (path.endsWith('/pom.xml')) {
+        processPom(text, path, module)
+    }
+}
+
+function processPom(text, path, module) {
+    register(path, module, "-pom", "deps")
+    let classInfo = config.data[module]['-pom']
+    classInfo.$label = "POM"
+    let info = config.data[module]['-pom'].deps
+    info.$label = "依赖"
+    info.$deps = Object.assign({}, info.$deps || {})
+    regEach(text, /<dependency>([\s\S]*?)<\/dependency>/g, r => {
+        let groupId = trim(reget(r[1], /<groupId>(.*?)<\/groupId>/))
+        let artifactId = trim(reget(r[1], /<artifactId>(.*?)<\/artifactId>/))
+        info.$deps[groupId + '.' + artifactId] = {
+            groupId,
+            artifactId,
+            version: reget(r[1], /<version>(.*?)<\/version>/).replace(/\s+/g, '')
+        }
+    })
+    if (!info.$profile) {
+        info.$profile = '<version>' + reget(text, /(?:    |\t)<version>(.*?)<\/version>/) + '</version>'
+    }
+    info.$repo.$properties = Object.assign({}, info.$repo.$properties || {})
+    regEach(text, /<properties>([\s\S]*?)<\/properties>/g, r => {
+        let ps = trim(r[0])
+        if(!ps) {
+            return
+        }
+
+        regEach(ps, /<(.*?)>(.*?)<\/.*?>/g, r=> {
+            info.$repo.$properties[trim(r[1])] = trim(r[2]).replace(/\s+/g, '')
+        })
+    })
 }
 
 function processErrorCode(text, path, module, className) {
@@ -346,15 +385,9 @@ function parsePath(path) {
     }
     let strs = path.replace(sourceDir, '').split('/').filter(item => item)
     return Object.values({
-        module: reget(path, /.*\/([^/]+)\/src\/main\/java.*/).replace(/-api$/, '')
-            .replace(/-rt$/, ''),
+        module: (reget(path, /.*\/([^/]+)\/src\/main\/java.*/) || reget(path, /.*\/([^/]+)\/.*?\.xml/)),
         className: strs[strs.length - 1].replace('.java', '')
     })
-}
-
-function reget(str, reg) {
-    let r = reg.exec(str)
-    return r ? trim(r[1]): ""
 }
 
 function getRepoInfo(path) {
@@ -375,8 +408,7 @@ function register(path, module, className, methodName, info) {
             $title: module,
             $type: 'module',
             $hidden: false,
-            $branch: repoInfo.$branch,
-            $repo: repoInfo.$repo
+            $repo: repoInfo
         }, config.data[module] || {})
     }
 
@@ -388,8 +420,7 @@ function register(path, module, className, methodName, info) {
             $title: module+'/'+className,
             $type: 'class',
             $hidden: false,
-            $branch: repoInfo.$branch,
-            $repo: repoInfo.$repo
+            $repo: repoInfo
         }, config.data[module][className] || {})
     }
 
@@ -402,8 +433,7 @@ function register(path, module, className, methodName, info) {
             $label: methodName,
             $title: config.data[module][className].$title + '.' + methodName,
             $type: 'method',
-            $branch: repoInfo.$branch,
-            $repo: repoInfo.$repo
+            $repo: repoInfo
         },methodName && !config.data[module][className][methodName] || {},info || {})
     }
 }
