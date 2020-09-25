@@ -122,23 +122,17 @@ export default {
       return str.replace(/[\/\*]+/g, '').trim().replace(/[\n]+/g, '<br>')
     },
     buildDeps(json) {
-      const deps = Object.values(json.$deps || {})
-      const pps = (json.$repo || {}).$properties
-      if (!(deps && pps)) {
+      if (!json.$deps) {
         return ''
       }
+      const deps = Object.values(json.$deps || {})
       let str = `##### Deps
 `
-
       str += `|GroupId|ArtifactId|version|
 |---|---|---|
 `
       for (const item of deps) {
-        let version = pps[item.version.replace(/[${}]/g, '')] || item.version
-        if (item.version === '${project.version}') {
-          version = json.$profile.replace('<version>', '').replace('</version>', '')
-        }
-        str += `|${item.groupId}|${item.artifactId}|${version}|
+        str += `|${item.groupId}|${item.artifactId}|${this.getVersion(json, item.version)}|
 `
       }
       return str
@@ -185,6 +179,26 @@ export default {
       }
       return ''
     },
+    getVersion(json, str) {
+      if (!str) {
+        return str
+      }
+      const pps = (json.$repo || {}).$properties
+      while (str.startsWith('${')) {
+        if (str === '${project.version}') {
+          str = json.$version
+        }
+        const x = pps[str.replace(/[${}]/g, '')]
+        if (!x) {
+          break
+        }
+        str = x
+      }
+      return str
+    },
+    asLine(...strs) {
+      return strs.filter(item => item).join('\n').trim()
+    },
     buildErrorCode(data) {
       if (!data) {
         return ''
@@ -216,7 +230,9 @@ ${json.$requestMethod ? `Method: ${json.$requestMethod}` : ''}
 `
       const desc = `
 \`\`\`
-${((json.$desc || '') + '\n' + (json.$profile || '')).trim()}
+${this.asLine(json.$desc,
+    json.$profile,
+    json.$version ? ('<version>' + this.getVersion(json, json.$version) + '</version>') : '')}
 \`\`\`
 `
       const params = !json.$params ? '' : this.buildTable(json.$params, 'Params', {})
