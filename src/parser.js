@@ -105,10 +105,10 @@ function eachJavaFile(path) {
 }
 
 function processPom(text, path, module) {
-    register(path, module, "-pom", "deps")
-    let classInfo = config.data[module]['-pom']
+    register(path, module, "maven-pom", "deps")
+    let classInfo = config.data[module]['maven-pom']
     classInfo.$label = "POM"
-    let info = config.data[module]['-pom'].deps
+    let info = config.data[module]['maven-pom'].deps
     info.$label = "依赖"
     info.$deps = Object.assign({}, info.$deps || {})
     regEach(text, /<dependency>([\s\S]*?)<\/dependency>/g, r => {
