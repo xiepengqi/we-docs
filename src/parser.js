@@ -120,8 +120,14 @@ function processPom(text, path, module) {
             version: reget(r[1], /<version>(.*?)<\/version>/).replace(/\s+/g, '')
         }
     })
+    if (!info.$desc) {
+        info.$desc = reget(text, /\n(?:    |\t)(<parent>[\s\S]+?<\/parent>)/).replace(/\n(?:    |\t)/g, '\n') + '\n' +
+            reget(text, /\n(?:    |\t)(<groupId>.*?<\/groupId>)/)+ '\n' +
+            reget(text, /\n(?:    |\t)(<artifactId>.*?<\/artifactId>)/)
+    }
     if (!info.$version) {
-        info.$version = reget(text, /\n(?:    |\t)<version>(.*?)<\/version>/)
+        info.$version = reget(text, /\n(?:    |\t)<version>(.*?)<\/version>/) ||
+            reget(info.$desc, /<version>(.*?)<\/version>/)
     }
     info.$repo.$properties = Object.assign({}, info.$repo.$properties || {})
     regEach(text, /<properties>([\s\S]*?)<\/properties>/g, r => {

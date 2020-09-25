@@ -174,7 +174,7 @@ export default {
       const items = ['@NotBlank', '@NotEmpty', '@NotNull', '@NoneNull']
       for (const item of items) {
         if (str.indexOf(item) !== -1) {
-          return 'Y'
+          return 'True'
         }
       }
       return ''
