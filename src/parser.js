@@ -264,7 +264,9 @@ function getCnLabel(str) {
 function enrichCommonMethodInfo(text, info) {
     let reg = new RegExp('[\\{\\};][^;\\}\\{]+\\s+((?:public)?\\s+(\\S+)\\s+'+info.$name+'\\s*\\(([^\\{\\};]*)\\))')
     let r = reg.exec(text)
-
+    if (!r) {
+        return;
+    }
     info.$profile = trim(r[1])
     info.$result = {
         $type: r[2]
