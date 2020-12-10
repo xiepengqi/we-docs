@@ -342,7 +342,7 @@ function enrichDomainInfo(result, fullClass, allText) {
 }
 
 function prepareJavaText(text) {
-    return text.replace(/return[^\n]*;/g, ';')
+    return text.replace(/return[ ]+[^\n]*;/g, ';')
         .replace(/ *, */g, ',')
         .replace(/< */g, '<')
         .replace(/ *>/g, '>')
@@ -447,7 +447,7 @@ function register(path, module, className, methodName, info) {
 }
 
 function getImpl(text) {
-    let interfaceName = reget(text, /public\s+class\s+\S+\s+(?:implements|extends)\s+(\S+)\s*/)
+    let interfaceName = reget(text, /public\s+class\s+\S+\s+(?:implements|extends)\s+([\w_\d]+)\s*/)
 
     return Object.values({
         implClass: interfaceName,
