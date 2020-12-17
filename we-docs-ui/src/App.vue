@@ -8,7 +8,11 @@
   >
     <el-aside>
       <el-input v-model="searchStr" placeholder="select..." class="search-input" clearable />
-      <left-nav :menus="menus" class="left-nav" />
+      <left-nav
+        v-loading.lock="inputLoading"
+        :menus="menus"
+        class="left-nav"
+      />
     </el-aside>
     <el-main>
       <el-button @click="goHome">Home</el-button>
@@ -28,7 +32,9 @@ export default {
   data() {
     return {
       searchStr: '',
-      menus: {}
+      menus: {},
+      searchId: '',
+      inputLoading: false
     }
   },
   computed: {
@@ -38,13 +44,21 @@ export default {
   },
   watch: {
     searchStr() {
-      for (const module of Object.values(this.menus)) {
-        for (const clazz of Object.values(module)) {
-          this.filterData(clazz, this.searchStr)
-          this.checkHidden(clazz)
-        }
-        this.checkHidden(module)
+      if (this.searchId) {
+        clearTimeout(this.searchId)
       }
+
+      this.searchId = setTimeout(() => {
+        this.inputLoading = true
+        for (const module of Object.values(this.menus)) {
+          for (const clazz of Object.values(module)) {
+            this.filterData(clazz, this.searchStr)
+            this.checkHidden(clazz)
+          }
+          this.checkHidden(module)
+        }
+        this.inputLoading = false
+      }, 1000)
     }
   },
   mounted() {
