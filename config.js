@@ -6,7 +6,8 @@ module.exports = {
     refreshSec: 180,
     data: {
         $title: 'GCPS-DOCS',
-        $desc: 'gcps we docs'
+        $desc: 'gcps we docs',
+        $nexusBrowseUrl: ""
     },
     modulePath: {
         'gcps-portal-manager': 'biz-manager',

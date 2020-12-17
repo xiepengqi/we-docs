@@ -11,6 +11,7 @@
       <left-nav :menus="menus" class="left-nav" />
     </el-aside>
     <el-main>
+      <el-button @click="goHome">Home</el-button>
       <div v-if="Object.keys(menus).length > 0" v-highlight v-html="htmlDoc" />
     </el-main>
   </el-container>
@@ -64,6 +65,9 @@ export default {
     })
   },
   methods: {
+    goHome() {
+      this.$store.state.content = this.menus
+    },
     checkHidden(data) {
       if ((typeof data) !== 'object') {
         return
@@ -215,6 +219,27 @@ export default {
 
       return str
     },
+    buildNexusDeps(json) {
+      if (!json.$nexusDeps) {
+        return ''
+      }
+      let str = `|模块|最近版本|
+|---|---|
+`
+      Object.keys(json.$nexusDeps)
+        .filter(key => !key.startsWith('$')).forEach(key => {
+          const list = json.$nexusDeps[key].filter(i => !i.match(/-20.*$/))
+          str += `|${key}|${list.filter((e, i) => list.indexOf(e) === i).slice(-9).join(' / ')}|
+`
+        })
+
+      return `
+#### NexusDeps Version
+Url: ${json.$nexusBrowseUrl}
+
+${str}
+      `
+    },
     buildMd(json) {
       const repoInfo = (json.$repo || json.$branch) ? `
 #### Git Repo
@@ -239,6 +264,7 @@ ${this.asLine(json.$desc,
       const result = !json.$result ? '' : this.buildTable(json.$result, 'Result', {})
       const errorCode = this.buildErrorCode(json.$errorCode)
       const deps = this.buildDeps(json)
+      const nexusDeps = this.buildNexusDeps(json)
       const mdStr = `
 ### ${json.$title}
 ${httpInfo}
@@ -248,6 +274,7 @@ ${params}
 ${result}
 ${errorCode}
 ${deps}
+${nexusDeps}
 `
       console.log(mdStr)
       return mdStr
@@ -276,22 +303,22 @@ ${deps}
     border:1px solid;
     font-size: 14px;
     tr td:first-child {
-      width: 200px;
+      min-width: 200px;
     }
     tr td:nth-child(2) {
-      width: 200px;
+      min-width: 200px;
     }
     tr td:nth-child(3) {
-      width: 200px;
+      min-width: 200px;
     }
     tr td:nth-child(4) {
-      width: 300px;
+      min-width: 300px;
     }
     thead {
       th
       {
         background-color: #e1dfe3;
-        width: 100px;
+        min-width: 200px;
       }
     }
     th {

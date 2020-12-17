@@ -1,6 +1,6 @@
 let fs = require('fs')
 const config = require("../config")
-let {trim, e, reget, regEach} = require('xpq-js-lib')
+let {trim, e, reget, regEach, got} = require('xpq-js-lib')
 
 let homeDir
 let sourceDir = trim(config.sourceDir).replace(/\/+/g, '/').replace(/\/$/, '')
@@ -28,6 +28,7 @@ function doProcess(){
 }
 
 function process() {
+    nexusVersion()
     return e(`echo ~`)
         .then(item => {
             // 确认家目录
@@ -251,6 +252,47 @@ function enrichExceptionCode(data) {
         }
         nr = reg.exec(data.$desc)
     }
+}
+
+function nexusVersion() {
+    if (!config.data.$nexusBrowseUrl) {
+        return;
+    }
+    if (!config.data.$nexusDeps) {
+        config.data.$nexusDeps = {}
+    }
+    got(config.data.$nexusBrowseUrl).then(resp => {
+        const reg = />([^<>]+)<\/a><\/td>/ig
+        let nr = reg.exec(resp.data)
+        while (nr) {
+            let path = config.data.$nexusBrowseUrl + "/" + nr[1]
+            let deps = nr[1]
+            if (deps === 'Parent Directory') {
+                nr = reg.exec(resp.data)
+                continue
+            }
+            if (!config.data.$nexusDeps[deps]) {
+                config.data.$nexusDeps[deps] = []
+            }
+            got(path).then(resp => {
+                if (resp.data.indexOf(deps + "</title>") === -1) {
+                    return
+                }
+
+                const reg = />([\d.-]+|[\d.-]+-SNAPSHOT)<\/a><\/td>/ig
+                let nr = reg.exec(resp.data)
+                while (nr) {
+                    config.data.$nexusDeps[deps].push(nr[1])
+                    nr = reg.exec(resp.data)
+                }
+            }).catch(e => {
+                console.log("error request: "+path)
+            })
+            nr = reg.exec(resp.data)
+        }
+    }).catch(e => {
+        console.log("error request: "+ config.data.$nexusBrowseUrl)
+    })
 }
 
 function getCnLabel(str) {
