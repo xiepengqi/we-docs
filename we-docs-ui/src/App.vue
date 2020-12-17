@@ -9,7 +9,7 @@
     <el-aside>
       <el-input v-model="searchStr" placeholder="select..." class="search-input" clearable />
       <left-nav
-        v-loading.lock="inputLoading"
+        v-loading="inputLoading"
         :menus="menus"
         class="left-nav"
       />
@@ -47,9 +47,8 @@ export default {
       if (this.searchId) {
         clearTimeout(this.searchId)
       }
-
+      this.inputLoading = true
       this.searchId = setTimeout(() => {
-        this.inputLoading = true
         for (const module of Object.values(this.menus)) {
           for (const clazz of Object.values(module)) {
             this.filterData(clazz, this.searchStr)
