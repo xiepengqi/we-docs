@@ -385,6 +385,7 @@ function enrichDomainInfo(result, fullClass, allText) {
 
 function prepareJavaText(text) {
     return text.replace(/return[ ]+[^\n]*;/g, ';')
+        .replace(/ +@Valid +/g, ' ')
         .replace(/ *, */g, ',')
         .replace(/< */g, '<')
         .replace(/ *>/g, '>')

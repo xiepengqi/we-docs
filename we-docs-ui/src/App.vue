@@ -63,6 +63,7 @@ export default {
   mounted() {
     this.$http.get('/data').then(resp => {
       this.menus = resp.data
+      window.$weDocs = this.menus
       this.$store.state.content = this.menus
       this.searchStr = location.href.split('?')[1]
     })
@@ -119,11 +120,13 @@ export default {
           data[item].$hidden = false
           return
         }
-        const matchStr = this.buildMatchStr(item, data[item].$name, data[item].$label,
+        let matchStr = data[item].$matchStr || this.buildMatchStr(item, data[item].$name, data[item].$label,
           data[item].$title, data[item].$profile, data[item].$url, Object.keys(data[item].$deps || {}).join(','))
+        matchStr = matchStr.toUpperCase()
+        data[item].$matchStr = matchStr
         let hidden = false
         for (const k of str.split(/\s+/).filter(item => item)) {
-          if (matchStr.toUpperCase().indexOf(k.toUpperCase()) === -1) {
+          if (matchStr.indexOf(k.toUpperCase()) === -1) {
             hidden = true
             break
           }
