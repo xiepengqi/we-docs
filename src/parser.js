@@ -8,10 +8,6 @@ let sourceDir = trim(config.sourceDir).replace(/\/+/g, '/').replace(/\/$/, '')
 let pathMap = {}
 let repoMap = {}
 
-Object.keys(config.data).filter(item => !item.startsWith("$")).forEach(item => {
-    delete config.data[item]
-})
-
 doProcess()
 
 function doProcess(){
@@ -28,6 +24,9 @@ function doProcess(){
 }
 
 function process() {
+    Object.keys(config.data).filter(item => !item.startsWith("$")).forEach(item => {
+        delete config.data[item]
+    })
     nexusVersion()
     return e(`echo ~`)
         .then(item => {
@@ -258,9 +257,7 @@ function nexusVersion() {
     if (!config.data.$nexusBrowseUrl) {
         return;
     }
-    if (!config.data.$nexusDeps) {
-        config.data.$nexusDeps = {}
-    }
+    config.data.$nexusDeps = {}
     got(config.data.$nexusBrowseUrl).then(resp => {
         const reg = />([^<>]+)<\/a><\/td>/ig
         let nr = reg.exec(resp.data)
@@ -385,6 +382,7 @@ function enrichDomainInfo(result, fullClass, allText) {
 
 function prepareJavaText(text) {
     return text.replace(/return[ ]+[^\n]*;/g, ';')
+        .replace(/(\)[\s\w\n]*){[\s\n]*\}/g, '$1{;}')
         .replace(/@Valid +/g, ' ')
         .replace(/ *, */g, ',')
         .replace(/< */g, '<')
