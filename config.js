@@ -1,7 +1,7 @@
 module.exports = {
     sourceDir: "/Users/xiepengqi/IdeaProjects",
     targetReg: "mercury-",
-    serverPort: 8080,
+    serverPort: 8069,
     gitRemoteInclude: "",
     refreshSec: 180,
     data: {
