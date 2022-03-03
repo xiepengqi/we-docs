@@ -1,19 +1,18 @@
 module.exports = {
     sourceDir: "/Users/xiepengqi/IdeaProjects",
-    targetReg: "gcps-",
+    targetReg: "mercury-",
     serverPort: 8080,
-    gitRemoteInclude: "phabricator.huobidev.com",
+    gitRemoteInclude: "",
     refreshSec: 180,
     data: {
-        $title: 'GCPS-DOCS',
-        $desc: 'gcps we docs',
+        $title: 'we-docs',
+        $desc: 'we-docs',
         $nexusBrowseUrl: ""
     },
     modulePath: {
         'gcps-portal-manager': 'biz-manager',
-        'gcps-portal-merchant': 'biz-merchant',
-        'gcps-portal-dealer': 'biz-dealer',
-        'gcps-portal-regulator': 'biz-regulator',
-        'gcps-portal-vendor': 'biz-vendor',
+        'mercury-dataware-server': 'mercury-dataware',
+        'mercury-account-server': 'mercury-account',
+        'mercury-bas-server': 'mercury-bas',
     }
 }
