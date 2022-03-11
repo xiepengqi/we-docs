@@ -10,7 +10,6 @@ module.exports = {
         $nexusBrowseUrl: ""
     },
     modulePath: {
-        'gcps-portal-manager': 'biz-manager',
         'mercury-dataware-server': 'mercury-dataware',
         'mercury-account-server': 'mercury-account',
         'mercury-bas-server': 'mercury-bas',

@@ -265,9 +265,9 @@ ${json.$repo.$branch || ''}
 \`\`\`
 ` : ''
       const httpInfo = `
-${json.$url ? `URL: ${json.$url}` : ''}
+${json.$url ? `#### URL: ${json.$url}` : ''}
 
-${json.$requestMethod ? `Method: ${json.$requestMethod}` : ''}
+${json.$requestMethod ? `#### Method: ${json.$requestMethod}` : ''}
 `
       const desc = `
 \`\`\`
