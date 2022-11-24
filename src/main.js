@@ -5,7 +5,7 @@ try{
 
     let serverInfo = {
         port: config.serverPort,
-        public: 'we-docs-ui/dist/'
+        public: 'static/ui/'
     }
 
     server(serverInfo,[
