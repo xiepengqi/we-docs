@@ -1,6 +1,6 @@
 module.exports = {
-    sourceDir: "/Users/xiepengqi/IdeaProjects",
-    targetReg: "mercury-",
+    sourceDir: "/xxx/xxx/xxx",
+    targetReg: "xxx-",
     serverPort: 8069,
     gitRemoteInclude: "",
     refreshSec: 180,
@@ -10,8 +10,6 @@ module.exports = {
         $nexusBrowseUrl: ""
     },
     modulePath: {
-        'mercury-dataware-server': 'mercury-dataware',
-        'mercury-account-server': 'mercury-account',
-        'mercury-bas-server': 'mercury-bas',
+
     }
 }
