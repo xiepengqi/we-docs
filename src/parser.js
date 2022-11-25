@@ -202,8 +202,8 @@ function getModulePath(module) {
 }
 
 function processRpc(text, path, module, className){
-    if (!(text.indexOf('org.apache.dubbo.config.annotation.Service') !== -1 &&
-        text.indexOf('@Service') !== -1)) {
+    if (!((text.indexOf('org.apache.dubbo.config.annotation.Service') !== -1 && text.indexOf('@Service') !== -1)
+        || (text.indexOf('org.apache.dubbo.config.annotation.DubboService') !== -1 && text.indexOf('@DubboService') !== -1))) {
         return;
     }
     register(path, module, className)
