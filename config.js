@@ -4,6 +4,7 @@ module.exports = {
     serverPort: 8069,
     gitRemoteInclude: "",
     refreshSec: 180,
+    gitUrlPrefix: "",
     data: {
         $title: 'we-docs',
         $desc: 'we-docs',

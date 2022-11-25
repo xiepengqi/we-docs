@@ -30,6 +30,9 @@ try{
 }
 
 async function checkoutGitInfo(repoUrl, repoName, branch) {
+    if (!repoUrl && config.gitUrlPrefix && repoName) {
+        repoUrl = config.gitUrlPrefix + '/' + repoName + '.git'
+    }
     if (!(repoUrl && repoName && branch && config.sourceDir && fs.existsSync(config.sourceDir))) {
         console.warn('checkoutGitInfo cond absent')
         return;
