@@ -171,7 +171,7 @@ function processHttp(text, path, module, className){
     let classInfo = config.data[module][className]
     classInfo.$desc = getClassDesc(text, className)
     classInfo.$package = getPackage(text)
-    classInfo.$label = getCnLabel(classInfo.$desc) || classInfo.$label
+    classInfo.$label = [trimSuffix(classInfo.$label), getCnLabel(classInfo.$desc)].map(trim).filter(i => i).join('-')
     classInfo.$profile = reget(text, /(public\s+(?:class|interface|abstract class)[^\{]+){/)
 
     classInfo.$path = reget(classInfo.$desc, /@RequestMapping\(\"(.*)\"\)/)
@@ -214,7 +214,7 @@ function processRpc(text, path, module, className){
     let implText = implPath ? prepareJavaText(String(fs.readFileSync(implPath))):""
 
     classInfo.$desc = getClassDesc(implText, implClass) ||  getClassDesc(text, className)
-    classInfo.$label = getCnLabel(classInfo.$desc) || implClass || className
+    classInfo.$label = [trimSuffix(implClass || className), getCnLabel(classInfo.$desc)].map(trim).filter(i => i).join('-')
     classInfo.$title = module + '/' + (implClass || className)
     classInfo.$package = getPackage(implText || text)
     classInfo.$profile = reget(implText || text, /(public\s+(?:class|interface|abstract class)[^\{]+){/)
@@ -229,6 +229,10 @@ function processRpc(text, path, module, className){
         enrichCommonMethodInfo(implText || text, classInfo[item])
         enrichExceptionCode(classInfo[item])
     })
+}
+
+function trimSuffix(str) {
+    return trim(str).replace(/controller$|facade$/i, '')
 }
 
 function enrichExceptionCode(data) {
