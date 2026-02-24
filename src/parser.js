@@ -1,4 +1,5 @@
 let fs = require('fs')
+let path = require('path')
 const config = require("../config")
 let {trim, e, reget, regEach, got} = require('xpq-js-lib')
 
@@ -7,6 +8,7 @@ let sourceDir = trim(config.sourceDir).replace(/\/+/g, '/').replace(/\/$/, '')
 
 let pathMap = {}
 let repoMap = {}
+const snapshotDir = config.snapshotDir || path.join(__dirname, '..', 'snapshots')
 
 doProcess()
 
@@ -24,6 +26,8 @@ function doProcess(){
 }
 
 function process() {
+    pathMap = {}
+    repoMap = {}
     Object.keys(config.data).filter(item => !item.startsWith("$")).forEach(item => {
         delete config.data[item]
     })
@@ -60,7 +64,10 @@ function process() {
                         repoMap[workPath] = {}
                     }
                     repoMap[workPath].$branch = strs[2]
+                    repoMap[workPath].$branchName = parseBranchName(strs[2])
                     repoMap[workPath].$repo = strs[1]
+                    repoMap[workPath].$path = workPath
+                    repoMap[workPath].$name = path.basename(workPath)
                 }
             }
             return Promise.all(paths.map(item => {
@@ -88,6 +95,7 @@ function process() {
                 })
                 .forEach(item => eachJavaFile(item))
         })
+        .then(() => writeSnapshots())
 }
 
 function eachJavaFile(path) {
@@ -452,6 +460,76 @@ function getRepoInfo(path) {
     return {}
 }
 
+function parseBranchName(branchLine) {
+    if (!branchLine) {
+        return 'UNKNOWN'
+    }
+    let r = /On branch (.+)$/.exec(branchLine)
+    if (r && r[1]) {
+        return trim(r[1])
+    }
+    r = /HEAD detached at (.+)$/.exec(branchLine)
+    if (r && r[1]) {
+        return 'DETACHED_' + trim(r[1])
+    }
+    r = /HEAD detached from (.+)$/.exec(branchLine)
+    if (r && r[1]) {
+        return 'DETACHED_' + trim(r[1])
+    }
+    return trim(branchLine)
+}
+
+function sanitizeBranchName(branchName) {
+    return (branchName || 'UNKNOWN').replace(/[^a-zA-Z0-9_.-]+/g, '__')
+}
+
+function ensureDirSync(dir) {
+    if (!dir) {
+        return
+    }
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true })
+    }
+}
+
+function buildRepoSnapshot(repoPath, repoInfo) {
+    const snapshot = {}
+    Object.keys(config.data).filter(key => key.startsWith('$')).forEach(key => {
+        snapshot[key] = config.data[key]
+    })
+    const branchName = repoInfo.$branchName || parseBranchName(repoInfo.$branch)
+    snapshot.$generatedAt = new Date().toISOString()
+    snapshot.$branch = branchName
+    snapshot.$repo = Object.assign({}, repoInfo, {
+        $branchName: branchName
+    })
+
+    Object.keys(config.data).filter(key => !key.startsWith('$')).forEach(key => {
+        const moduleInfo = config.data[key]
+        if (moduleInfo && moduleInfo.$repo && moduleInfo.$repo.$path === repoPath) {
+            snapshot[key] = JSON.parse(JSON.stringify(moduleInfo))
+        }
+    })
+    return snapshot
+}
+
+function writeSnapshots() {
+    if (!snapshotDir) {
+        return
+    }
+    ensureDirSync(snapshotDir)
+    Object.keys(repoMap).forEach(repoPath => {
+        const repoInfo = repoMap[repoPath] || {}
+        const repoName = repoInfo.$name || path.basename(repoPath)
+        const branchName = repoInfo.$branchName || parseBranchName(repoInfo.$branch)
+        const safeBranch = sanitizeBranchName(branchName)
+        const repoDir = path.join(snapshotDir, repoName, safeBranch)
+        ensureDirSync(repoDir)
+        const snapshot = buildRepoSnapshot(repoPath, repoInfo)
+        fs.writeFileSync(path.join(repoDir, 'latest.json'), JSON.stringify(snapshot, null, 2))
+    })
+}
+
 function register(path, module, className, methodName, info) {
     const repoInfo = getRepoInfo(path)
     if (module && !config.data[module]) {
@@ -547,5 +625,4 @@ function getFieldDesc(text, fieldName) {
     return r ? trim(trim(r[1]) + "\n" + trim(r[2]).replace(/(.*);/, '默认: $1 \n'))
         .replace(/\n\s*/g, '\n'): ""
 }
-
 

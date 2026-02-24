@@ -1,3 +1,5 @@
+const path = require('path')
+
 module.exports = {
     sourceDir: "/xxx/xxx/xxx",
     targetReg: "xxx-",
@@ -5,6 +7,7 @@ module.exports = {
     gitRemoteInclude: "",
     refreshSec: 180,
     gitUrlPrefix: "",
+    snapshotDir: path.join(__dirname, 'snapshots'),
     data: {
         $title: 'we-docs',
         $desc: 'we-docs',

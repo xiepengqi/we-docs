@@ -20,3 +20,4 @@ selenium-debug.log
 *.local
 *.iml
 workspace/
+snapshots/
